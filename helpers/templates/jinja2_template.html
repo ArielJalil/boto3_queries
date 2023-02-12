@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html lang = "en">
+<head>
+  <!-- e-mail body -->
+  <title>YOUR REPORT</title>
+  <meta charset = "UTF-8" />
+  <style>
+    body {
+      text-align: left;
+    }
+    h1 {
+      color: orange
+    }
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width:90%;
+    }
+    td, th {
+      border: 1px solid black;
+      text-align: left;
+      padding: 2px;
+    }
+    .odd {
+      background-color: lightskyblue;
+    }
+    .even {
+      background-color: white;
+    }
+  </style>
+</head>
+<html>
+  <body>
+    <img src="cid:1" align="right">
+    <h1>
+      YOUR TEAM NAME
+    </h1>
+    <h2>
+      YOUR REPORT TITLE
+    </h2>
+    <h3>
+      YOUR REPORT DESCRIPTION
+    </h3>
+    </br>
+    <table>
+      <tr>
+        <th>HEADER 1</th>
+        <th>HEADER 2</th>
+        <th>HEADER 3</th>
+      </tr>
+      {% for result in results %}
+      <tr>
+        <td>
+          {{ result[0] }}
+        </td>
+        {% if 'is running' in result[1] %}
+        <td style="text-align: center; color: green">
+          RUNNING
+        {% else %}
+        <td style="text-align: center; color: red">
+          NOT RUNNING
+        {% endif %}
+        </td>
+        <td>
+          {{ result[1] }}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    </br>
+    <a style="color: red">Note:</a><a> YOUR NOTE </a>
+
+</body>
+</html>
