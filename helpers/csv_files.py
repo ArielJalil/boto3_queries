@@ -6,6 +6,9 @@ import csv
 import os
 import logging
 
+from helpers import MANDATORY_TAGS
+from helpers.boto3_func import get_tag_keys
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -39,3 +42,21 @@ def csv_to_list(file_name: str) -> list:
         data = None
 
     return data
+
+
+def query_to_csv(result: list, resource_csv_headers: list, file_path: str):
+    """Generate a CSV file que the query results."""
+    # Default headers
+    csv_headers = [
+        'AWS Account ID',
+        'AWS Account Alias',
+        'AWS Region',
+    ]
+
+    # Add resource columns of interest
+    csv_headers += resource_csv_headers
+
+    # Add tag keys as column names
+    csv_headers += get_tag_keys(MANDATORY_TAGS)
+
+    csv_writer(file_path, result, csv_headers)

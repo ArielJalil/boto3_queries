@@ -13,19 +13,17 @@ from email import encoders
 from email.mime.multipart import MIMEMultipart
 
 LOGGER = logging.getLogger(__name__)
-EMAIL_FROM = 'YOUR_TEAM_DL@example.com'
-COMPANY_LOGO = 'files/tux.jpeg'
-SMTP_SERVER_PORT = 'smtp.example.com:25'
+
 
 def smtp_report(body_html, subject, to, cc):
     """Send the report by e-mail."""
-    logo = COMPANY_LOGO
-    smtp_server = SMTP_SERVER_PORT
+    logo = 'files/mercury_logo.png'
+    smtp_server = 'smtpgw.mrp.net.nz:25'
 
     # Create the enclosing (outer) message
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
-    msg['From'] = EMAIL_FROM
+    msg['From'] = 'awsoperations@mercury.co.nz'
     msg['To'] = to
     msg['Cc'] = cc
     emaillist = to.split(',') + cc.split(',')
@@ -35,8 +33,8 @@ def smtp_report(body_html, subject, to, cc):
 
     # Attach company logo to html body
     with open(logo, 'rb') as im:
-        img = MIMEBase('image', 'jpeg', filename='img0.jpeg')
-        img.add_header('Content-Disposition', 'attachment', filename='img0.jpeg')
+        img = MIMEBase('image', 'png', filename='img0.png')
+        img.add_header('Content-Disposition', 'attachment', filename='img0.png')
         img.add_header('X-Attachment-Id', '1')
         img.add_header('Content-ID', '<1>')
         img.set_payload(im.read())

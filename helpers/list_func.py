@@ -57,3 +57,13 @@ def split_list(full_list: list, chunk_size: int) -> list:
     """Generate n number of smaller chunks from a list."""
     for i in range(0, len(full_list), chunk_size):
         yield full_list[i:i + chunk_size]
+
+
+def is_in_the_list(items: list, item:str) -> bool:
+    """Check if an items exist in a given list."""
+    if item in items:
+        response = True
+    else:
+        response = False
+
+    return response

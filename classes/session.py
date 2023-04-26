@@ -8,7 +8,7 @@ import boto3
 import logging
 
 logger = logging.getLogger("boto_session")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s", "%m/%d/%Y %I:%M:%S %p")
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
@@ -32,7 +32,7 @@ class AwsSession:
 
     def cli(self) -> object:
         """Start a session to be used from CLI and check if the credentials are cached already."""
-        cli_cache = os.path.join(os.path.expanduser('~'), '.aws/cli/cache')
+        cli_cache = os.path.join(os.path.expanduser('~'), '.aws/sso/cache')     # it can be .aws/cli/cache instead
         try:
             session = boto3.Session(profile_name=self.profile,
                                     region_name=self.region)
@@ -43,7 +43,11 @@ class AwsSession:
         except Exception as error: # pylint: disable=broad-except
             display_exception(error)
 
-        session._session.get_component('credential_provider').get_provider('assume-role').cache = botocore.credentials.JSONFileCache(cli_cache) # pylint: disable=protected-access
+        try:
+            session._session.get_component('credential_provider').get_provider('assume-role').cache = botocore.credentials.JSONFileCache(cli_cache) # pylint: disable=protected-access
+        except Exception as error: # pylint: disable=broad-except
+            display_exception(error)
+
         return session
 
     def lambdas(self) -> object:

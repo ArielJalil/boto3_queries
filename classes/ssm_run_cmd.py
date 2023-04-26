@@ -68,7 +68,7 @@ class SsmRunCommand:
                 ],
                 DocumentName='AWS-RunShellScript',
                 TimeoutSeconds=30,
-                Comment='Run one-liner script',
+                Comment='Check bamboo agent nodes',
                 Parameters={
                     'commands': [
                         self.cmd_to_run
@@ -132,20 +132,3 @@ class SsmRunCommand:
             )
 
         return cmd_outs
-
-
-def usage_example():
-    filters = [
-        {
-            'Key': 'tag:Name',
-            'Values': [
-                'INSTANCE-A',
-                'INSTANCE-B',
-                'INSTANCE-N'
-            ]
-        }
-    ]
-    cmd_to_run = "uname -a"
-
-    ssm_object = SsmRunCommand(ssm_client, filters, cmd_to_run)
-    return ssm_object.run_cmd()

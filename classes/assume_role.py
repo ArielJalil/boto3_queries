@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 """Class for handle STS Assume Role on AWS services."""
 
-import botocore
 import logging
+from botocore.exceptions import ClientError
 
-logger = logging.getLogger("assume_role")
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s", "%m/%d/%Y %I:%M:%S %p")
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+LOGGER = logging.getLogger(__name__)
 
 
 class StsObject:
@@ -28,15 +22,15 @@ class StsObject:
     def assume_role(self):
         """Assume Service Role function."""
         client = self.session.client('sts')
+
         try:
             sts = client.assume_role(
                 RoleArn=f"arn:aws:iam::{self.account_id}:role/{self.role}",
                 RoleSessionName=self.role,
                 DurationSeconds=self.duration
             )
-
-        except botocore.exceptions.ClientError as erro:
-            logger(f"STS assume role failed: \n{erro}")
+        except ClientError as erro:
+            LOGGER.error(f"STS assume role failed: \n{erro}")
             sts = None
 
         return sts
@@ -54,8 +48,8 @@ class StsObject:
                     aws_secret_access_key=sts['Credentials']['SecretAccessKey'],
                     aws_session_token=sts['Credentials']['SessionToken']
                 )
-            except botocore.exceptions.ClientError as erro:
-                logger(f"Boto3 client {aws_service} service failed:\n{erro}")
+            except ClientError as erro:
+                LOGGER.error(f"Boto3 client {aws_service} service failed:\n{erro}")
 
         return client
 
@@ -71,7 +65,7 @@ class StsObject:
                 aws_secret_access_key=sts['Credentials']['SecretAccessKey'],
                 aws_session_token=sts['Credentials']['SessionToken']
             )
-        except botocore.exceptions.ClientError as erro:
-            logger(f"Boto3 resource for {aws_service} service failed:\n{erro}")
+        except ClientError as erro:
+            LOGGER.error(f"Boto3 resource for {aws_service} service failed:\n{erro}")
 
         return resource

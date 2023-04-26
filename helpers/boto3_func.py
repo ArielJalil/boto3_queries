@@ -1,58 +1,72 @@
 # -*- coding: utf-8 -*-
 """General useful functions."""
 
+import sys
 import logging
-
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, SSOTokenLoadError, UnauthorizedSSOTokenError
 from datetime import datetime
 from dateutil.parser import parse
 
 from classes.assume_role import StsObject
-
-from helpers import SERVICE_ACCOUNT_ID, SERVICE_ROLE_NAME
+from helpers import SERVICE_ACCOUNT_ID, SERVICE_ROLE_NAME, SESSION, REGION
 
 LOGGER = logging.getLogger(__name__)
 
 
-def get_boto3_client(session: object, account_id: str, service: str, region='ap-southeast-2') -> object:
-    """Get boto3 client service."""
-    # Service AWS account and service role
-    service_account = SERVICE_ACCOUNT_ID
-    service_role_name = SERVICE_ROLE_NAME
+def abort_script(message) -> None:
+    """Abort code execution."""
+    print(f"\n INTERRUPTED !!!\n")
+    LOGGER.error(f"Code execution aborted - {message}")
+    sys.exit(1)
 
+
+def validate_sts_token():
+    """Check if the user running the query is authenticated."""
+    sts = get_boto3_client(SERVICE_ACCOUNT_ID, 'sts')
+
+    try:
+        caller = sts.get_caller_identity()
+    except UnauthorizedSSOTokenError as erro:
+        abort_script(erro)
+    except SSOTokenLoadError as erro:
+        abort_script(erro)
+
+    return caller
+
+
+def get_boto3_client(account_id: str, service: str, region=REGION) -> object:
+# def get_boto3_client(account_id: str, service: str, region='us-east-1') -> object:
+    """Get boto3 client service."""
     # root organization account doesn't have the IAM Role used in the child accounts
-    if account_id != service_account:
+    if account_id != SERVICE_ACCOUNT_ID:
         # Assume service role on target AWS account
         sts_obj = StsObject(
-            session,
+            SESSION,
             account_id,
-            service_role_name
+            SERVICE_ROLE_NAME
         )
+
         # Set boto3 client using STS credentials
         service = sts_obj.get_client(
             service,
             region
         )
-    # for the service account you no need to assume another role instead use your own
+    # The service account is already authenticated and no need to assume a different role
     else:
-        service = session.client(service, region)
+        service = SESSION.client(service, region)
 
     return service
 
 
-def get_boto3_resource(session: object, account_id: str, service: str, region='ap-southeast-2') -> object:
+def get_boto3_resource(account_id: str, service: str, region='ap-southeast-2') -> object:
     """Get boto3 client service."""
-    # Service AWS account and service role
-    service_account = SERVICE_ACCOUNT_ID
-    service_role_name = SERVICE_ROLE_NAME
-
     # root organization account doesn't have the IAM Role used in the child accounts
-    if account_id != service_account:
+    if account_id != SERVICE_ACCOUNT_ID:
         # Assume service role on target AWS account
         sts_obj = StsObject(
-            session,
+            SESSION,
             account_id,
-            service_role_name
+            SERVICE_ROLE_NAME
         )
         # Set boto3 resource using STS credentials
         resource = sts_obj.get_resource(
@@ -61,15 +75,15 @@ def get_boto3_resource(session: object, account_id: str, service: str, region='a
         )
     # for the service account you no need to assume another role instead use your own
     else:
-        resource = session.resource(service, region)
+        resource = SESSION.resource(service, region)
 
     return resource
 
 
-def get_active_accounts(session: object) -> list:
+def get_active_accounts() -> list:
     """Get the list of active AWS accounts in the Organization."""
     aws_accounts_id_alias = list()
-    if (org := session.client('organizations')):
+    if (org := SESSION.client('organizations')):
         aws_accounts_raw = list(paginate(org, 'list_accounts'))
         for account in aws_accounts_raw:
             if account['Status'] == 'ACTIVE':
@@ -83,31 +97,42 @@ def get_active_accounts(session: object) -> list:
     return aws_accounts_id_alias
 
 
-def get_regions(session: object) -> list:
+def get_regions(account_id: str) -> list:
     """Gets Regions Enabled for Account."""
     regions = list()
-    if (ec2 := session.client('ec2')):
-        try:
-            response = ec2.describe_regions(
-                AllRegions=False
-                )
+    ec2 = get_boto3_client(account_id, 'ec2')
+    try:
+        response = ec2.describe_regions(
+            AllRegions=False
+            )
 
-            for region in response['Regions']:
-                regions.append(region['RegionName'])
+        for region in response['Regions']:
+            regions.append(region['RegionName'])
 
-        except ClientError as e:
-            message = 'Error getting list of regions: {}'.format(e)
-            LOGGER.error(message)
+    except ClientError as e:
+        message = 'Error getting list of regions: {}'.format(e)
+        LOGGER.error(message)
 
     return regions
 
 
 def paginate(client: object, method: str, **kwargs) -> list:
     """Paginate boto3 client methods."""
-    paginator = client.get_paginator(method)
-    for page in paginator.paginate(**kwargs).result_key_iters():
-        for result in page:
-            yield result
+    try:
+        paginator = client.get_paginator(method)
+    except ClientError as e:
+        message = 'Paginator failed: {}'.format(e)
+        LOGGER.error(message)
+        return
+
+    try:
+        for page in paginator.paginate(**kwargs).result_key_iters():
+            for result in page:
+                yield result
+
+    except ClientError as e:
+        message = 'Pagination failed: {}'.format(e)
+        LOGGER.error(message)
 
 
 def get_value_if_any(dictionary: dict, key: str) -> str:
@@ -139,6 +164,7 @@ def get_ec2_platform(dictionary: dict, key: str) -> str:
 
     return platform
 
+
 def get_instance_profile(dictionary: dict, key: str) -> str:
     """Check if ec2 have instance profile and return the ARN if any."""
     try:
@@ -150,9 +176,23 @@ def get_instance_profile(dictionary: dict, key: str) -> str:
 
     return instance_profile_arn
 
+
 def _curated_str(string: str) -> str:
     """Remove CSV file conflictive characters from string."""
     return string.replace('\"', '').replace('\'', '').replace(',', ';')
+
+
+def get_all_tags(aws_response: dict) -> list:
+    """Get mandatory TAGs if those are set."""
+    tags = []
+    try:
+        for t in aws_response['Tags']:
+            # tags.append(f"{t['Key']} | {t['Value']}")
+            tags.append(t['Key'])
+    except: # pylint: disable=broad-except
+        pass
+
+    return tags
 
 
 def get_tags(aws_response: dict, tags_of_interest) -> list:
@@ -174,7 +214,6 @@ def get_critical_tags(tags_list: list, tags_of_interest: dict) -> dict:
                 tags_of_interest[tags['Key']] = _curated_str(tags['Value'])
 
     return tags_of_interest
-
 
 
 def get_critical_tags_raw(tags_list: list, tags_of_interest: dict) -> dict:

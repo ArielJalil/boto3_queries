@@ -2,17 +2,31 @@
 
 Use boto3 Python module to run CLI queries on AWS resources with an AWS Organization.
 
-## Query EC2 instances
+## Required Python modules
 
-This python script will run a query of all EC2 instances across all enabled regions in an Organization using parallel processing code, it certainly runs fast though.
+* boto3
+* botocore
+* click
 
-Please update update your specific details in the `__init__.py` file before run it:
+## Query AWS Resources
+
+This python script will run a query of the selected AWS resource across all enabled regions in an Organization using parallel processing code, it certainly runs fast though.
+
+Please update update your specific details in the `helpers/__init__.py` file before run it:
 
 ```bash
-$ python3 query_ec2_instances.py
-```
+$ python3 boto3_query.py --help
 
-**Note:** This script can be used as a pattern to build any AWS resource query with little effort.
+Usage: boto3_query.py [OPTIONS]
+
+  Run an AWS resource query by service name.
+
+Options:
+  -n, --name [ec2|tag_editor|vpc|vpn|subnet|sec_group|vpce|vpc_peering|vpc_dhcp|tgw|tgw_attach|dx_vgw|vx_vif|igw|nat_gw|ebs_volume|ebs_volume_snap|route_table|aws_backup|r53_hosted_zones|ssm_inventory|ssm_patching|aws_config|ram|s3_bucket|iam_user|iam_sso_user|iam_sso_group]
+                                  Query name to run  [default: ec2]
+  -a, --account TEXT              AWS Account ID to run the query on.
+  --help                          Show this message and exit.
+```
 
 ## Author and Lincense:
 
