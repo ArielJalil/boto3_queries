@@ -309,7 +309,6 @@ def iam_user(r:dict) -> list:
         r['UserName'],
         r['pass_last_used'],
         r['days_since_last_login'],
-        r['is_api_key_allow'],
         r['accesss_key_1'],
         r['status_key_1'],
         r['days_since_creation_key_1'],

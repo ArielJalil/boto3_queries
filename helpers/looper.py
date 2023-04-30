@@ -308,8 +308,6 @@ def paginator_selector(aws: dict) -> list:
             for pol in attached_policies['AttachedPolicies']:
                 user_policies.append(pol['PolicyName'])
 
-            is_api_key_allow = bool('airnz-allowapikeys-policy' in  user_policies)
-
             # Check Access Keys status
             accesss_key_1 = None
             status_key_1 = None
@@ -360,7 +358,6 @@ def paginator_selector(aws: dict) -> list:
 
             r['pass_last_used'] = pass_last_used
             r['days_since_last_login'] = days_since_last_login
-            r['is_api_key_allow'] = is_api_key_allow
             r['accesss_key_1'] = accesss_key_1
             r['status_key_1'] = status_key_1
             r['days_since_creation_key_1'] = days_since_creation_key_1

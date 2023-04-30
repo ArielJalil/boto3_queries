@@ -348,7 +348,6 @@ SETUP = {
             'User Name',
             'Password Last Used',
             'Days since last login',
-            'Is Create API Keys Allowed',
             'accesss_key_1',
             'status_key_1',
             'Days since creation',
