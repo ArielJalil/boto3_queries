@@ -3,16 +3,17 @@
 Run AWS resource queries across an AWS Organization.
 
 Usage example:
-Query VPCs with all accounts in the organization within all regions:
+Query VPCs at all AWS accounts in the organization within all available regions:
 
 > python3 boto3_query.py -n vpc
 
 """
 import click
-import helpers.config as config
-
+import helpers.config   as     config
+from classes.session    import AwsSession
+from datetime           import datetime
 from re                 import match
-from helpers            import LOGGER, SETUP, DATE
+from helpers            import LOGGER, SETUP
 from helpers.csv_files  import query_to_csv
 from helpers.list_func  import get_dic_item
 from helpers.boto3_func import get_active_accounts, validate_sts_token
@@ -61,6 +62,11 @@ def aws_account_id_callback(ctx, param, value):
 )
 def run_query(name: str, account: str) -> None:
     """Run an AWS resource query by service name."""
+
+    # Choose the AWS cli profile name and region | ap-southeast-2 by default
+    session_obj = AwsSession(config.CLI_PROFILE)
+    config.SESSION = session_obj.cli()
+
     # Check if the user running the query is authenticated.
     caller = validate_sts_token()
     LOGGER.info(f"Query started by {caller['Arn']}")
@@ -77,11 +83,18 @@ def run_query(name: str, account: str) -> None:
     )
 
     # Send the results to a csv file
-    csv_dir = '/tmp/'
+    # csv_dir = '/tmp/'
+    # csv_dir = 'queries/'
+    # csv_dir = '/mnt/c/Users/jalilA/Downloads/'
+    csv_dir = '/mnt/c/Users/jalilA/Khalil/Documents/C&I/boto3_queries/'
+
+    # Date to add when creating csv output files
+    current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+
     query_to_csv(
-        result,                            # Query result in a list of lists
-        SETUP[name]['Headers'],            # Resource headers
-        f'{csv_dir}{name}_{DATE}.csv'      # CSV output file
+        result,                                 # Query result in a list of lists
+        SETUP[name]['Headers'],                 # Resource headers
+        f'{csv_dir}{name}_{current_time}.csv'   # CSV output file
     )
 
 

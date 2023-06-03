@@ -1,37 +1,7 @@
 """Helper modules."""
 
 import logging
-from datetime import datetime
-
-from classes.session import AwsSession
-
-# Customer specific variables
-_cli_profile = 'your_cli_profile_name'    # AWS CLI profile that give you access to your service account
-SERVICE_ACCOUNT_ID = '123456789012'       # AWS Account ID of your Organization root account
-SERVICE_ROLE_NAME  = 'your_service_role'  # IAM role in target accounts i.e. AWSControlTowerExecution
-REGION             = 'aws_region'         # Default region for your resources
-IDENTITY_STORE_ID  = 'd-1234567890'       # Identity store ID if you are using SSO Login
-
-MANDATORY_TAGS = {                  # Tags of interest that will be used in the query output
-    'Name':              'NoValue', # Resource name
-    'CostCode':          'NoValue', # Finance code used for internal billing
-    'BusUnit':           'NoValue', # Department owning the resource
-    'App':               'NoValue', # Application Name        bbb
-    'Env':               'NoValue', # Sandbox / DEV / TEST / QA / PRE-PROD / PROD / DR
-    'Priority':          'NoValue', # Incident priority the fail of this resource can generate
-    'Category':          'NoValue', # Public / Private
-    'ProductOwner':      'NoValue', # Resource owner team
-    'ManagedBy':         'NoValue', # Support team name
-    # ----- EC2 specific tags ----- #
-    'ManagementType':    'NoValue', # Pet / Cattle
-    'BackupType':        'NoValue', # AWS BKP / Snapshots / None
-    'PatchingType':      'NoValue', # Automated / Manual
-    'MaintenanceWindow': 'NoValue', # Timeframe for outage
-    'IsSsmAgent':        'NoValue', # True / False
-    # ----------------------------- #
-    'GitRepoName':       'NoValue', # Repository name to look for IaC code
-    'DeploymentType':    'NoValue'  # CFN / CDK / Terraform / Console
-}
+import helpers.config as config
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -41,35 +11,28 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
-# Choose the AWS cli profile name and region | ap-southeast-2 by default
-_session_obj = AwsSession(_cli_profile)
-SESSION = _session_obj.cli()
-
-# Date to add when creating csv output files
-DATE = datetime.now().strftime("%Y%m%d-%H%M%S")
-
 # Setup for each query
 SETUP = {
     'ec2': {
         'Client': 'ec2',
         'Paginator': 'describe_instances',
         'Headers': [
-            'Instance ID',
-            'Image ID',
-            'State',
-            'Instance type',
-            'Key name',
-            'Launch Time',
-            'Days old',
-            'Private IP address',
-            'Public IP address',
-            'VPC ID',
-            'Subnet ID',
+            'InstanceId',
+            'ImageId',
+            'State:Name',
+            'InstanceType',
+            'KeyName',
+            'LaunchTime',
+            'DaysSince:LaunchTime',
+            'PrivateIpAddress',
+            'PublicIpAddress',
+            'VpcId',
+            'SubnetId',
             'Architecture',
-            'EBS volume count',
-            'EBS volume size (GB)',
+            'VolumeCount',
+            'VolumeSize',
             'Platform',
-            'IAM Instance Profile ARN',
+            'IamInstanceProfile',
             'IsAwsBuckupEnabled',
             'IsSsmPatchEnabled',
             'IsSsmAgentEnabled'
@@ -79,165 +42,159 @@ SETUP = {
         'Client': 'resourcegroupstaggingapi',
         'Paginator': 'get_resources',
         'Headers': [
-            'Service',
-            'Resource Type',
-            'Resource ID'
+            'ArnService',
+            'ArnType',
+            'ArnId'
+        ]
+    },
+    'ami': {
+        'Client': 'ec2',
+        'Paginator': 'describe_images',
+        'Headers': [
+            'ImageId',
+            'Name',
+            'Description',
+            'Architecture',
+            'CreationDate',
+            'Public',
+            'PlatformDetails'
         ]
     },
     'vpc': {
         'Client': 'ec2',
         'Paginator': 'describe_vpcs',
         'Headers': [
-            'ID',
-            'Owner ID',
-            'CIDR Block',
-            'DHCP Options ID',
+            'VpcId',
+            'OwnerId',
+            'CidrBlock',
+            'DhcpOptionsId',
             'IsDefault'
         ]
     },
-    'vpn': {
+    'vpc_flow_logs': {
         'Client': 'ec2',
-        'Paginator': None,
+        'Paginator': 'describe_flow_logs',
         'Headers': [
-            'Category',
-            'Name',
-            'Type',
-            'VPN Connection ID',
-            'CGW ID',
-            'TGW ID',
-            'Gateway Association State'
+            'FlowLogId',
+            'FlowLogStatus',
+            'ResourceId',
+            'LogGroupName',
+            'LogDestinationType',
+            'LogDestination'
         ]
     },
     'subnet': {
         'Client': 'ec2',
         'Paginator': 'describe_subnets',
         'Headers': [
-            'Subnet ID',
-            'VPC ID',
-            'Owner ID',
-            'CIDR Block'
+            'SubnetId',
+            'VpcId',
+            'OwnerId',
+            'CidrBlock'
         ]
     },
     'sec_group': {
         'Client': 'ec2',
         'Paginator': 'describe_security_groups',
         'Headers': [
-            'Sec-Group ID',
-            'Sec-Group Name'
+            'GroupId',
+            'GroupName',
+            'IpPermissions',
+            'IpPermissionsEgress'
         ]
     },
     'vpce': {
         'Client': 'ec2',
         'Paginator': 'describe_vpc_endpoints',
         'Headers': [
-            'Service Name',
-            'Endpoint ID',
-            'Endpoint Type',
-            'VPC ID',
+            'ServiceName',
+            'VpcEndpointId',
+            'VpcEndpointType',
+            'VpcId',
             'State',
-            'Private DNS Enabled',
-            'Owner Account'
+            'PrivateDnsEnabled',
+            'OwnerId'
         ]
     },
     'vpc_peering': {
         'Client': 'ec2',
         'Paginator': 'describe_vpc_peering_connections',
         'Headers': [
-            'ID',
-            'Status',
-            'Accepter Owner ID',
-            'Accepter VPC ID',
-            'Accepter Region',
-            'Accepter Allow remote DNS resolution',
-            'Requester Owner ID',
-            'Requester VPC ID',
-            'Requester Region',
-            'Requester Allow remote DNS resolution'
+            'VpcPeeringConnectionId',
+            'Status:Code',
+            'AccepterVpcInfo:OwnerId',
+            'AccepterVpcInfo:VpcId',
+            'AccepterVpcInfo:Region',
+            'AccepterVpcInfo:PeeringOptions:AllowDnsResolutionFromRemoteVpc',
+            'RequesterVpcInfo:OwnerId',
+            'RequesterVpcInfo:VpcId',
+            'RequesterVpcInfo:Region',
+            'RequesterVpcInfo:PeeringOptions:AllowDnsResolutionFromRemoteVpc'
         ]
     },
     'vpc_dhcp': {
         'Client': 'ec2',
         'Paginator': 'describe_dhcp_options',
         'Headers': [
-            'DHCP Options ID',
-            'Owner Account',
-            'Domain Name',
-            'Domain Name Servers'
+            'DhcpOptionsId',
+            'OwnerId',
+            'CustomDnsDomains',
+            'CustomDnsServers',
+            'CustomNtpServers'
         ]
     },
     'tgw': {
         'Client': 'ec2',
         'Paginator': 'describe_transit_gateways',
         'Headers': [
-            'ID',
-            'Owner ID',
+            'TransitGatewayId',
+            'OwnerId',
             'State',
-            'Association Default Route Table ID',
-            'DNS Support',
-            'VPN ECMP Support'
+            'Options:AssociationDefaultRouteTableId',
+            'Options:DnsSupport',
+            'Options:VpnEcmpSupport'
         ]
     },
     'tgw_attach': {
         'Client': 'ec2',
         'Paginator': 'describe_transit_gateway_attachments',
         'Headers': [
-            'TGW Attachemnt ID',
+            'TransitGatewayAttachmentId',
             'State',
-            'Association State',
-            'TGW Route Table ID',
-            'Owner ID',
-            'Resource Type',
-            'Resource ID',
-            'Subnets'
-        ]
-    },
-    'dx_vgw': {
-        'Client': 'directconnect',
-        'Paginator': None,
-        'Headers': [
-            'VGW ID',
-            'State'
-        ]
-    },
-    'vx_vif': {
-        'Client': 'directconnect',
-        'Paginator': None,
-        'Headers': [
-            'Type',
-            'Name',
-            'State',
-            'VIF ID',
-            'VLAN',
-            'Region',
-            'Owner Account'
+            'Association:State',
+            'Association:TransitGatewayRouteTableId',
+            'ResourceOwnerId',
+            'ResourceType',
+            'ResourceId',
+            'CustomSubnets'
         ]
     },
     'igw': {
         'Client': 'ec2',
         'Paginator': 'describe_internet_gateways',
         'Headers': [
-            'IGW ID',
-            'Owner ID',
-            'Attachemnt State',
-            'VPC ID'
+            'InternetGatewayId',
+            'OwnerId',
+            'CustomState',
+            'CustomVpcId'
         ]
     },
     'nat_gw': {
         'Client': 'ec2',
         'Paginator': 'describe_nat_gateways',
         'Headers': [
-            'ID',
-            'Connectivity Type',
+            'NatGatewayId',
+            'ConnectivityType',
             'State',
-            'VPC ID',
-            'Subnet Id'
+            'VpcId',
+            'SubnetId'
         ]
     },
     'ebs_volume': {
         'Client': 'ec2',
         'Paginator': 'describe_volumes',
         'Headers': [
-            'Volume ID',
+            'VolumeId',
             'State',
             'Size'
         ]
@@ -246,141 +203,232 @@ SETUP = {
         'Client': 'ec2',
         'Paginator': "describe_snapshots",
         'Headers': [
-            'Snapshot ID',
-            'Snapshot Description',
-            'Volume ID',
-            'Volume Size',
+            'SnapshotId',
+            'Description',
+            'VolumeId',
+            'VolumeSize',
             'StartTime',
-            'Days old'
+            'DaysSince:StartTime'
         ]
     },
     'route_table': {
         'Client': 'ec2',
         'Paginator': 'describe_route_tables',
         'Headers': [
-            'Route Table ID',
-            'VPC ID',
-            'Owner ID',
-            'Propagating VGWs',
-            '# Associations',
-            'Associations details',
-            '# Routes',
-            'Route details'
+            'RouteTableId',
+            'VpcId',
+            'OwnerId',
+            'CustomPropagativeVgwId',
+            'CustomCountAssociations',
+            'CustomAssociations',
+            'CustomCountRoutes',
+            'CustomRoutes'
         ]
     },
     'aws_backup': {
         'Client': 'backup',
         'Paginator': 'list_protected_resources',
         'Headers': [
-            'Resource Type',
-            'Resource ID',
-            'Resource Name',
-            'Last Backup date',
-            'Days since last backup'
+            'ResourceType',
+            'ArnId',
+            'ResourceName',
+            'LastBackupTime',
+            'DaysSince:LastBackupTime'
         ]
     },
     'r53_hosted_zones': {
         'Client': 'route53',
         'Paginator': 'list_hosted_zones',
         'Headers': [
-            'ID',
+            'Id',
             'Name',
-            'Comment',
-            'Private Zone',
-            'Record Set Count'
+            'Config:Comment',
+            'Config:PrivateZone',
+            'ResourceRecordSetCount'
         ]
     },
     'ssm_inventory': {
         'Client': 'ssm',
         'Paginator': 'describe_instance_information',
         'Headers':[
-            'Instance ID',
-            'Instance Name',
-            'Computer Name',
-            'Platform',
-            'Platform version',
-            'Association Status'
+            'InstanceId',
+            'Name',
+            'ComputerName',
+            'PlatformName',
+            'PlatformVersion',
+            'AssociationStatus'
         ]
     },
     'ssm_patching': {
         'Client': 'ssm',
         'Paginator': 'describe_instance_patch_states_for_patch_group',
         'Headers':[
-            'Instance ID',
-            'Patch Group',
-            'Operating System',
-            'Operation start time',
-            'Operation end time'
+            'InstanceId',
+            'PatchGroup',
+            'CustomName',
+            'CustomComputerName',
+            'CustomOperatingSystem',
+            'CustomPlatformVersion',
+            'OperationStartTime',
+            'OperationEndTime',
+            'DaysSince:OperationEndTime'
         ]
     },
     'aws_config': {
         'Client': 'config',
         'Paginator': 'list_discovered_resources',
         'Headers':[
-            'Resource Type',
-            'Resource ID',
-            'Resource Name'
+            'resourceType',
+            'resourceId',
+            'resourceName'
+        ]
+    },
+    'iam_user': {
+        'Client': 'iam',
+        'Region': [config.REGION],
+        'Paginator': 'list_users',
+        'Headers':[
+            'UserName',
+            'PasswordLastUsed',
+            'DaysSince:PasswordLastUsed',
+            'accesss_key_1',
+            'status_key_1',
+            'days_since_creation_key_1',
+            'last_used_key_1',
+            'accesss_key_2',
+            'status_key_2',
+            'days_since_creation_key_2',
+            'last_used_key_2',
+            'user_grp',
+            'user_policies'
+        ]
+    },
+    'iam_sso_user': {                           # Only works in root account
+        'Client': 'identitystore',
+        'Region': [config.REGION],
+        'Paginator': 'list_users',
+        'Headers':[
+            'UserName',
+            'UserId',
+            'CustomGroupIds',
+            'DisplayName',
+            'Title',
+            'CustomLocation'
+        ]
+    },
+    'iam_sso_group': {                          # It doesn't work in root account
+        'Client': 'identitystore',
+        'Region': [config.REGION],
+        'Paginator': 'list_groups',
+        'Headers':[
+            'GroupId',
+            'DisplayName',
+            'Description'
+        ]
+    },
+    'iam_sso_permission_sets': {                # Only works in root account
+        'Client': 'sso-admin',
+        'Region': [config.REGION],
+        'Paginator': 'list_permission_sets',
+        'Headers':[
+            'Name',
+            'Description',
+            'SessionDuration',
+            'PermissionSetArn'
+        ]
+    },
+    'iam_sso_account_assignments': {            # Only works in root account
+        'Client': 'sso-admin',
+        'Region': [config.REGION],
+        'Paginator': 'list_account_assignments',
+        'Headers':[
+            'AccountId',
+            'CustomAccountAlias',
+            'PermissionSetArn',
+            'CustomPermissionSetName',
+            'PrincipalType',
+            'PrincipalId',
+            'CustomPrincipalName'
+        ]
+    },
+    'health': {
+        'Client': 'health',
+        'Region': [config.REGION],
+        'Paginator': 'describe_events',
+        'Headers':[
+            'arn',
+            'service',
+            'eventTypeCode',
+            'eventTypeCategory',
+            'region',
+            'startTime',
+            'endTime',
+            'lastUpdatedTime',
+            'statusCode',
+            'eventScopeCode',
+            'CustomEntityValue'
+        ]
+    },
+    's3_bucket': {
+        'Client': 's3',
+        'Region': [config.REGION],
+        'Paginator': None,
+        'Method': 'list_buckets',
+        'ResponseItem': 'Buckets',
+        'Headers':[
+            'Name',
+            'DaysSince:CreationDate',
+            'CreationDate'
         ]
     },
     'ram': {
         'Client': 'ram',
         'Paginator': None,
+        'Method': 'list_resources',
+        'ResponseItem': 'resources',
         'Headers':[
-            'Service',
-            'Resource Type',
-            'Resource ID'
+            'ArnService',
+            'ArnType',
+            'ArnId'
         ]
     },
-    's3_bucket': {
-        'Client': 's3',
-        'Region': [REGION],
+    'vpn': {
+        'Client': 'ec2',
         'Paginator': None,
-        'Headers':[
-            'S3 Bucket Name',
-            'Creation Date'
+        'Method': 'describe_vpn_connections',
+        'ResponseItem': 'VpnConnections',
+        'Headers': [
+            'Category',
+            'Type',
+            'VpnConnectionId',
+            'TransitGatewayId',
+            'CustomerGatewayId',
+            'GatewayAssociationState'
         ]
     },
-    'iam_user': {
-        'Client': 'iam',
-        'Region': [REGION],
-        'Paginator': 'list_users',
-        'Headers':[
-            'User Name',
-            'Password Last Used',
-            'Days since last login',
-            'accesss_key_1',
-            'status_key_1',
-            'Days since creation',
-            'Days since last use',
-            'accesss_key_2',
-            'status_key_2',
-            'Days since creation',
-            'Days since last use',
-            'IAM Groups',
-            'IAM User Policies'
+    'dx_vgw': {
+        'Client': 'directconnect',
+        'Paginator': None,
+        'Method': 'describe_virtual_gateways',
+        'ResponseItem': 'virtualGateways',
+        'Headers': [
+            'virtualGatewayId',
+            'virtualGatewayState'
         ]
     },
-    'iam_sso_user': {
-        'Client': 'identitystore',
-        'Region': [REGION],
-        'Paginator': 'list_users',
-        'Headers':[
-            'User Name',
-            'User ID',
-            'Group IDs',
-            'Display Name',
-            'Title',
-            'Street Address'
-        ]
-    },
-    'iam_sso_group': {
-        'Client': 'identitystore',
-        'Region': [REGION],
-        'Paginator': 'list_groups',
-        'Headers':[
-            'Group ID',
-            'Display Name',
-            'Description'
+    'dx_vif': {
+        'Client': 'directconnect',
+        'Paginator': None,
+        'Method': 'describe_virtual_interfaces',
+        'ResponseItem': 'virtualInterfaces',
+        'Headers': [
+            'virtualInterfaceType',
+            'virtualInterfaceName',
+            'virtualInterfaceState',
+            'virtualInterfaceId',
+            'vlan',
+            'region',
+            'ownerAccount'
         ]
     }
 }

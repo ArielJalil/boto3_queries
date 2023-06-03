@@ -6,7 +6,7 @@ import csv
 import os
 import logging
 
-from helpers import MANDATORY_TAGS
+import helpers.config   as     config
 from helpers.boto3_func import get_tag_keys
 
 LOGGER = logging.getLogger(__name__)
@@ -57,6 +57,6 @@ def query_to_csv(result: list, resource_csv_headers: list, file_path: str):
     csv_headers += resource_csv_headers
 
     # Add tag keys as column names
-    csv_headers += get_tag_keys(MANDATORY_TAGS)
+    csv_headers += get_tag_keys(config.MANDATORY_TAGS)
 
     csv_writer(file_path, result, csv_headers)
