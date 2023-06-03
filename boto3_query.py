@@ -83,10 +83,9 @@ def run_query(name: str, account: str) -> None:
     )
 
     # Send the results to a csv file
+    csv_dir = 'queries/'
     # csv_dir = '/tmp/'
-    # csv_dir = 'queries/'
-    # csv_dir = '/mnt/c/Users/jalilA/Downloads/'
-    csv_dir = '/mnt/c/Users/jalilA/Khalil/Documents/C&I/boto3_queries/'
+    # csv_dir = '/mnt/c/Users/YOUR_WINDOWS_USER/Downloads/'   # If you are using WSL
 
     # Date to add when creating csv output files
     current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
