@@ -25,9 +25,10 @@ Options:
   -n, --name [ec2|tag_editor|ami|vpc|vpc_flow_logs|subnet|sec_group|vpce|vpc_peering|vpc_dhcp|tgw|tgw_attach|igw|nat_gw|ebs_volume|ebs_volume_snap|route_table|aws_backup|r53_hosted_zones|ssm_inventory|ssm_patching|aws_config|iam_user|iam_sso_user|iam_sso_group|iam_sso_permission_sets|iam_sso_account_assignments|health|s3_bucket|ram|vpn|dx_vgw|dx_vif]
                                   Query name to run  [default: ec2]
   -a, --account TEXT              AWS Account ID to run the query on.
-  --help                          Show this message and exit.                         Show this message and exit.
+  -r, --region TEXT               AWS Region
+  --help                          Show this message and exit.
 ```
 
-## Author and Lincense:
+## Author and Lincense
 
 This script has been written by [Ariel Jall](https://github.com/ArielJalil) and it is released under [GNU 3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).

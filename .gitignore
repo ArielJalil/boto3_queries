@@ -1,0 +1,7 @@
+.vscode
+*.pyc
+*.csv
+*.xlsm
+*.xlsx
+__pycache__/
+queries/

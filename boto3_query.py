@@ -8,28 +8,51 @@ Query VPCs at all AWS accounts in the organization within all available regions:
 > python3 boto3_query.py -n vpc
 
 """
+
 import click
-import helpers.config   as     config
-from classes.session    import AwsSession
-from datetime           import datetime
 from re                 import match
+
+from classes.csv_file   import CsvHandler
+import helpers.config   as     config
+
 from helpers            import LOGGER, SETUP
-from helpers.csv_files  import query_to_csv
-from helpers.list_func  import get_dic_item
-from helpers.boto3_func import get_active_accounts, validate_sts_token
-from helpers.looper     import query_by_account, loop_function
+from helpers.resources  import get_resources
+from helpers.boto3_func import *
+
+def query_by_account(aws: dict) -> list:
+    """Trigger a query at each active region by AWS account in parallel."""
+
+    try:    # Check if the query is multi-region or not
+        regions = SETUP[config.QUERY]['Region']
+    except: # pylint: disable=broad-except
+        regions = regions_to_query(config.REGION, aws['AccountId'])
+
+    # Generate a list with required region/s for the query
+    query_region = add_region(aws, regions)
+
+    return loop_function(query_region, resources, False)
 
 
-def get_accounts_to_query(account_id: str) -> list:
-    """Return a list with the AWS account/s where the query will run."""
-    aws_accounts = get_active_accounts()    # List of active AWS accounts in the Org
-    if account_id != '111111111111':
-        aws_accounts = [get_dic_item(aws_accounts, 'AccountId', account_id)]
-        if aws_accounts == [None]:
-            LOGGER.error('Account ID %s does not exist in the Organization.', account_id)
-            exit(1)
+def resources(aws:dict) -> list:
+    """Run query with an AWS account and region."""
+    csv_rows = list()  # Initialize rows list
 
-    return aws_accounts
+    # Loop through aws resources
+    for r in get_resources(aws, config.QUERY):
+        # Start row with common values to all queries
+        csv_row = [str(aws['AccountId']), aws['AccountAlias'], aws['Region']]
+
+        # Add selected resource values from boto3 response
+        for header in SETUP[config.QUERY]['Headers']:
+            csv_row.append(try_get_value(r, header))
+
+        # Add selected tag values
+        csv_row += get_resource_tags(r)
+
+        # Add new row
+        csv_rows.append(csv_row)
+
+    return csv_rows
 
 
 def aws_account_id_callback(ctx, param, value):
@@ -60,41 +83,35 @@ def aws_account_id_callback(ctx, param, value):
     callback=aws_account_id_callback,
     help='AWS Account ID to run the query on.'
 )
-def run_query(name: str, account: str) -> None:
+@click.option(
+    '-r',
+    '--region',
+    default=None,
+    show_default=True,
+    nargs=1,
+    help='AWS Region'
+)
+def run_query(name: str, account: str, region: str) -> None:
     """Run an AWS resource query by service name."""
-
-    # Choose the AWS cli profile name and region | ap-southeast-2 by default
-    session_obj = AwsSession(config.CLI_PROFILE)
-    config.SESSION = session_obj.cli()
 
     # Check if the user running the query is authenticated.
     caller = validate_sts_token()
     LOGGER.info(f"Query started by {caller['Arn']}")
 
-    # Query paramenters
+    # Set query paramenters to share the value across modules
     config.QUERY = name
-    accounts_to_query = get_accounts_to_query(account)
+    config.REGION = region
 
-    # Loop through all accounts/regions and run a boto3 query in parallel
-    result = loop_function(
-        accounts_to_query,  # List of AWS account/s to run a query on
-        query_by_account,   # Fan out queries per account in paralallel
-        True                # Flag to display result summary
+    # Loop through all accounts/regions to run an AWS SDK query in parallel
+    results = loop_function(
+        accounts_to_query(account), # List of AWS account/s to run a query on
+        query_by_account,           # Query to run per account in paralallel
+        True                        # Flag to display result summary
     )
 
     # Send the results to a csv file
-    csv_dir = 'queries/'
-    # csv_dir = '/tmp/'
-    # csv_dir = '/mnt/c/Users/YOUR_WINDOWS_USER/Downloads/'   # If you are using WSL
-
-    # Date to add when creating csv output files
-    current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-    query_to_csv(
-        result,                                 # Query result in a list of lists
-        SETUP[name]['Headers'],                 # Resource headers
-        f'{csv_dir}{name}_{current_time}.csv'   # CSV output file
-    )
+    csv_file  = CsvHandler(f"{config.CSV_PATH}{name}")
+    csv_file.query_to_csv(SETUP[name]['Headers'], results)
 
 
 if __name__ == '__main__':
