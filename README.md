@@ -1,6 +1,6 @@
 # Boto3 queries
 
-Use boto3 Python module to run CLI queries on AWS resources within an AWS Organization.
+Use boto3 Python module to run CLI queries to resources within an AWS Organization.
 
 ## Required Python modules
 
