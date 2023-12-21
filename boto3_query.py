@@ -35,7 +35,7 @@ def query_by_account(aws: dict) -> list:
 
 def resources(aws:dict) -> list:
     """Run query with an AWS account and region."""
-    csv_rows = list()  # Initialize rows list
+    csv_rows = list()   # Initialize rows list
 
     # Loop through aws resources
     for r in get_resources(aws, config.QUERY):
