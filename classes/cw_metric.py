@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Class to handle CloudWatch Metrics."""
 
-from logging  import getLogger
 from datetime import datetime, timedelta
+from logging import getLogger
 
 LOGGER = getLogger(__name__)
+
 
 class CwMetric:
     """Manage CloudWatch Metric."""
@@ -13,7 +14,7 @@ class CwMetric:
         """Set class variables."""
         self.client = client
 
-    def get_s3_metric(self, bucket: str, metric:str, stg_type: str, statistic='Sum') -> dict:
+    def get_s3_metric(self, bucket: str, metric: str, stg_type: str, statistic='Sum') -> dict:  # pylint: disable=line-too-long # noqa: E501
         """Query S3 Namespace Metric."""
         result = self.client.get_metric_statistics(
             Namespace="AWS/S3",
@@ -30,7 +31,7 @@ class CwMetric:
                 'Value': result["Datapoints"][0][statistic],
                 'Unit': result['Datapoints'][0]['Unit']
             }
-        except:
+        except:  # pylint: disable=bare-except # noqa: E722
             return {
                 'Value': 0,
                 'Unit': None
