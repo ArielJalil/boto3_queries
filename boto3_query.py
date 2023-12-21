@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-Run AWS resource queries across an AWS Organization.
+"""Run AWS resource queries across an AWS Organization.
 
 Usage example:
 Query VPCs at all AWS accounts in the organization within all available regions
 
 > python3 boto3_query.py -n vpc
-
 """
 
 from re import match
@@ -59,7 +57,7 @@ def resources(aws: dict) -> list:
 
 
 def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argument # noqa: E501
-    """Validate AWS Account ID is valid."""
+    """Validate AWS Account ID is 12 integer digits."""
     if not match('\d{12}', value):  # pylint: disable=anomalous-backslash-in-string # noqa: W605, E501
         raise click.BadParameter('AWS account ID must be 12 digits.')
 
