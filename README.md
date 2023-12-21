@@ -8,6 +8,10 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 * botocore
 * click
 
+## Pre-requisite
+
+* A valid AWS cli profile
+
 ## Query AWS Resources
 
 This python script will run a query of the selected AWS resource across all enabled regions in an Organization using parallel processing code, it certainly runs fast though.
