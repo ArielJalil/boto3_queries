@@ -10,7 +10,7 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 
 ## Pre-requisite
 
-* A valid AWS cli profile
+* A valid AWS cli profile (either SSO or IAM user)
 
 ## Query AWS Resources
 
