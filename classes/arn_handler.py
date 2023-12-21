@@ -1,12 +1,13 @@
-"""
-Class to handle ARN values individualy.
+# -*- coding: utf-8 -*-
+"""Class to handle ARN values individualy.
 
-ARN format:
+ARN formats:
 
 arn:partition:service:region:account-id:resource-id
 arn:partition:service:region:account-id:resource-type/resource-id
 arn:partition:service:region:account-id:resource-type:resource-id
 """
+
 
 class ArnHandler:
     """Manage Dynamo DB client & resources."""
@@ -79,6 +80,7 @@ class ArnHandler:
 
 
 def usage_example():
+    """Example code for the class."""
     arn = "arn:partition:service:region:account-id:resource-type/resource-id"
     arn_obj = ArnHandler(arn)
     arn_obj.details()
