@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """General useful functions to support boto3 api calls."""
 
-from sys                 import exit
-from logging             import getLogger
-from datetime            import datetime
-from dateutil.parser     import parse
+import ast
+from sys import exit as leave
+from logging import getLogger
+from datetime import datetime
+from dateutil.parser import parse  # pylint: disable=import-error
 from botocore.exceptions import ClientError, SSOTokenLoadError, \
-                                UnauthorizedSSOTokenError
+                                UnauthorizedSSOTokenError  # pylint: disable=import-error # noqa: E501
 
-from classes.looper      import Looper
+from classes.looper import Looper
 from classes.assume_role import StsObject
 from classes.arn_handler import ArnHandler
-from classes.tag         import Tag
-
-import helpers.config    as config
+from classes.tag import Tag
+from helpers import config
 
 LOGGER = getLogger(__name__)
 
@@ -36,30 +36,37 @@ def validate_sts_token():
 
 def b3_client(account_id: str, service: str, region=config.REGION) -> object:
     """Get boto3 client service."""
-    # root organization account doesn't have the IAM Role used in the child accounts
+    # root org account doesn't have the IAM Role used in the child accounts
     if account_id != config.SERVICE_ACCOUNT_ID:
         # Assume service role on target AWS account
-        sts_obj = StsObject(config.SESSION, account_id, config.SERVICE_ROLE_NAME)
-
+        sts_obj = StsObject(
+            config.SESSION,
+            account_id,
+            config.SERVICE_ROLE_NAME
+        )
         # Set boto3 client using STS credentials
         client = sts_obj.get_client(service, region)
     else:
-        # The service account is already authenticated and it will use user's IAM role
+        # The service account is already authenticated with user's IAM role
         client = config.SESSION.client(service, region)
 
     return client
 
 
-def b3_resource(account_id: str, service: str, region='ap-southeast-2') -> object:
+def b3_resource(account_id: str, service: str, region='ap-southeast-2') -> object:  # noqa: E501
     """Get boto3 client service."""
-    # root organization account doesn't have the IAM Role used in the child accounts
+    # root org account doesn't have the IAM Role used in the child accounts
     if account_id != config.SERVICE_ACCOUNT_ID:
         # Assume service role on target AWS account
-        sts_obj = StsObject(config.SESSION, account_id, config.SERVICE_ROLE_NAME)
+        sts_obj = StsObject(
+            config.SESSION,
+            account_id,
+            config.SERVICE_ROLE_NAME
+        )
         # Set boto3 resource using STS credentials
         resource = sts_obj.get_resource(service, region)
     else:
-        # The service account is already authenticated and it will use user's IAM role
+        # The service account is already authenticated with user's IAM role
         resource = config.SESSION.resource(service, region)
 
     return resource
@@ -68,10 +75,10 @@ def b3_resource(account_id: str, service: str, region='ap-southeast-2') -> objec
 def get_active_accounts() -> list:
     """Get the list of active AWS accounts in the Organization."""
     org = config.SESSION.client('organizations')
-    excluded_accounts = [] # Add a list of Account IDs to be excluded from queries
+    excluded_accounts = []   # Add a list of Account IDs to be excluded
     for account in list(paginate(org, 'list_accounts')):
         # if account['Status'] == 'ACTIVE':
-        if account['Status'] == 'ACTIVE' and account['Id'] not in excluded_accounts:
+        if account['Status'] == 'ACTIVE' and account['Id'] not in excluded_accounts:  # noqa: E501
             yield {
                 'AccountId': account['Id'],
                 'AccountAlias': account['Name']
@@ -80,7 +87,7 @@ def get_active_accounts() -> list:
 
 def accounts_to_query(account_id: str) -> list:
     """Return a list with the AWS account/s where the query will run."""
-    accounts = get_active_accounts() # List of active AWS accounts in the Org
+    accounts = get_active_accounts()  # List of active AWS accounts in the Org
     if account_id != '111111111111':
         # check if the selected account belongs to the Org
         accounts = [get_dic_item(accounts, 'AccountId', account_id)]
@@ -89,7 +96,7 @@ def accounts_to_query(account_id: str) -> list:
                 'Account ID %s does not exist in the Organization.',
                 account_id
             )
-            exit(1)
+            leave(1)
 
     return accounts
 
@@ -119,7 +126,7 @@ def regions_to_query(region: str, account_id: str) -> list:
                 region,
                 account_id
             )
-            exit(1)
+            leave(1)
 
     return regions
 
@@ -128,30 +135,32 @@ def try_get_value(dictionary: dict, key: str) -> str:
     """Get value from dictionary if the key exist."""
     if ":" not in key:
         try:
-            return dictionary[key]
-        except: # pylint: disable=broad-except
-            return 'NoValue'
+            value = dictionary[key]
+        except:  # pylint: disable=bare-except # noqa: E722
+            value = 'NoValue'
     else:
         r = ''
         dic_keys = key.split(':')
         if dic_keys[0] == 'DaysSince':
             try:
-                return get_days_since(dictionary[dic_keys[1]])
-            except: # pylint: disable=broad-except
-                return -1
+                value = get_days_since(dictionary[dic_keys[1]])
+            except:  # pylint: disable=bare-except # noqa: E722
+                value = -1
         elif dic_keys[0] == 'DaysTo':
             try:
-                return get_days_to(dictionary[dic_keys[1]])
-            except: # pylint: disable=broad-except
-                return -1
+                value = get_days_to(dictionary[dic_keys[1]])
+            except:  # pylint: disable=bare-except # noqa: E722
+                value = -1
         else:
-            for k in dic_keys: # Multiple dictionary keys
+            for k in dic_keys:  # Multiple dictionary keys
                 r += "['" + k + "']"
 
             try:
-                return eval(f"dictionary{r}")
-            except: # pylint: disable=broad-except
-                return 'NoValue'
+                value = ast.literal_eval(f"dictionary{r}")
+            except:  # pylint: disable=bare-except # noqa: E722
+                value = 'NoValue'
+
+    return value
 
 
 def get_resource_tags(resource: str) -> list:
@@ -159,17 +168,17 @@ def get_resource_tags(resource: str) -> list:
     try:
         tags = Tag(resource['Tags'])
         r_tag = tags.values(config.MANDATORY_TAGS)
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         r_tag = list(config.MANDATORY_TAGS.values())
         r_tag.append(len(list(config.MANDATORY_TAGS.values())))
 
     return r_tag
 
 
-def get_ec2_name(aws: dict, id: str) -> str:
+def get_ec2_name(aws: dict, ec2_id: str) -> str:
     """Get EC2 instance name."""
     ec2 = b3_resource(aws['AccountId'], 'ec2', aws['Region'])
-    instance = ec2.Instance(id)
+    instance = ec2.Instance(ec2_id)
 
     return get_tag_value(instance.tags, 'Name')
 
@@ -178,7 +187,7 @@ def get_ec2_platform(dictionary: dict, key: str) -> str:
     """Check if ec2 platform is Windows or Linux."""
     try:
         platform = dictionary[key]
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         platform = 'Linux'
 
     return platform
@@ -189,7 +198,7 @@ def get_ec2_instance_profile(dictionary: dict, key: str) -> str:
     try:
         instance_profile = dictionary[key]
         instance_profile_arn = instance_profile['Arn']
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         instance_profile_arn = 'NoValue'
 
     return instance_profile_arn
@@ -197,11 +206,13 @@ def get_ec2_instance_profile(dictionary: dict, key: str) -> str:
 
 def get_volume(client: object, ebs_mappings: list) -> int:
     """Get count and grant total size of EBS volumes."""
-    volume_ids = list()
+    volume_ids = []
     for v in ebs_mappings:
         volume_ids.append(v['Ebs']['VolumeId'])
 
-    ebs_volumes = list(paginate(client, 'describe_volumes', VolumeIds=volume_ids))
+    ebs_volumes = list(
+        paginate(client, 'describe_volumes', VolumeIds=volume_ids)
+    )
     ebs_total_size = 0
     for v in ebs_volumes:
         ebs_total_size += v['Size']
@@ -239,7 +250,7 @@ def get_s3_tags(bucket: object) -> list:
     """Get s3 resource tags."""
     try:
         tags = bucket.tag_set
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         tags = None
 
     return tags
@@ -249,7 +260,7 @@ def get_user_tags(user: object) -> list:
     """Get User resource tags."""
     try:
         tags = user.tags
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         tags = None
 
     return tags
@@ -258,8 +269,10 @@ def get_user_tags(user: object) -> list:
 def get_last_used(access_key_access: dict) -> int:
     """Get number of days since last AccessKey usage."""
     try:
-        return get_days_since(access_key_access['AccessKeyLastUsed']['LastUsedDate'])
-    except: # pylint: disable=broad-except
+        return get_days_since(
+            access_key_access['AccessKeyLastUsed']['LastUsedDate']
+        )
+    except:  # pylint: disable=bare-except # noqa: E722
         return -1
 
 
@@ -267,7 +280,7 @@ def get_user_location(user: dict) -> str:
     """Get SSO user location."""
     try:
         return user['Addresses'][0]['Formatted']
-    except: # pylint: disable=broad-except
+    except:  # pylint: disable=bare-except # noqa: E722
         return ''
 
 
@@ -285,7 +298,7 @@ def get_access_key(k: dict, client: object) -> str:
 
 def get_iam_usr_policies(client: object, user: str) -> list:
     """Get Inline and Attached IAM policy names attached to a user."""
-    user_policies = list()
+    user_policies = []
     inline_policies = client.list_user_policies(UserName=user)
     if inline_policies['PolicyNames']:
         user_policies = inline_policies['PolicyNames']
@@ -299,21 +312,22 @@ def get_iam_usr_policies(client: object, user: str) -> list:
 
 
 def get_iam_usr_groups(client: object, user: str) -> list:
-    """Get IAM group names a user belongs to and the policy names attached to the groups."""
-    user_grp = list()
-    grp_policies = list()
+    """Get IAM group names a user belongs to and the policy names attached to
+    the groups."""
+    user_grp = []
+    grp_policies = []
 
     user_groups = client.list_groups_for_user(UserName=user)
     for grp in user_groups['Groups']:
         user_grp.append(grp['GroupName'])
 
-        # Grab the IAM Policies associated which each group: Inline and Managed
-        inline_grp_policies = client.list_group_policies(GroupName=grp['GroupName'])
+        # Grab IAM Policies associated which each group: Inline and Managed
+        inline_grp_policies = client.list_group_policies(GroupName=grp['GroupName'])  # noqa: E501
         for policy in inline_grp_policies['PolicyNames']:
             grp_policies.append(policy)
 
         # Managed policies
-        for policy in paginate(client, 'list_attached_group_policies', GroupName=grp['GroupName']):
+        for policy in paginate(client, 'list_attached_group_policies', GroupName=grp['GroupName']):  # pylint: disable=line-too-long # noqa: E501
             grp_policies.append(policy['PolicyName'])
 
     return user_grp, grp_policies
@@ -323,7 +337,7 @@ def get_arn_resources(resource_list: list, arn: str) -> list:
     """Get the ARN details and add it to the resources."""
     for r in resource_list:
         arn_object = ArnHandler(r[arn])
-        r['ArnService'] =  arn_object.service()
+        r['ArnService'] = arn_object.service()
         r['ArnType'] = arn_object.resource_type()
         r['ArnId'] = arn_object.resource_id()
         yield r
@@ -363,18 +377,18 @@ def get_tgw_att_subnets(r: dict, client: object, resource: object) -> dict:
             Filters=[{'Name': 'vpc-id', 'Values': [r['ResourceId']]}]
         )
         subnets = ''
-        for id in vpc_att['TransitGatewayVpcAttachments'][0]['SubnetIds']:
+        for vpc_id in vpc_att['TransitGatewayVpcAttachments'][0]['SubnetIds']:
             try:
-                sn = resource.Subnet(id)
+                sn = resource.Subnet(vpc_id)
                 sn_az = sn.availability_zone
                 try:
                     sn_tag_name = get_tag_value(sn.tags, 'Name')
-                except: # pylint: disable=broad-except
+                except:  # pylint: disable=bare-except # noqa: E722
                     sn_tag_name = 'NoValue'
 
-                subnets += f"{id}|{sn_az}|{sn_tag_name},"
-            except: # pylint: disable=broad-except
-                pass
+                subnets += f"{vpc_id}|{sn_az}|{sn_tag_name},"
+            except:  # pylint: disable=bare-except # noqa: E722
+                subnets = None
     else:
         subnets = None
 
@@ -407,9 +421,9 @@ def get_permission_set_details(client: object, permission_sets: list) -> list:
         yield get_permission_set_detail(client, p)
 
 
-###############################################################################
-################################### Helpers ###################################
-###############################################################################
+# ------------------------------------------------------------------------- #
+# -------------------------------- Helpers -------------------------------- #
+# ------------------------------------------------------------------------- #
 
 def loop_function(items: list, f_to_call: object, flag: bool) -> list:
     """Run a function multiple times using parallel processing."""
@@ -429,8 +443,8 @@ def add_region(aws: dict, regions: list) -> list:
 
 def abort_script(message) -> None:
     """Abort code execution."""
-    LOGGER.error(f"Code execution aborted - {message}")
-    exit(1)
+    LOGGER.error("Code execution aborted - %s", message)
+    leave(1)
 
 
 def get_tag_value(list_of_dic: list, key: str) -> dict:
@@ -438,30 +452,48 @@ def get_tag_value(list_of_dic: list, key: str) -> dict:
     tag = next((item for item in list_of_dic if item['Key'] == key), None)
     if tag:
         return tag['Value']
-    else:
-        return 'NoValue'
+
+    return 'NoValue'
 
 
-def get_operating_system(platform: str) -> str:
+def get_operating_system(platform: str) -> str:  # pylint: disable=too-many-branches # noqa: E501
     """Translate platform name to operating system name for SSM api calls."""
-    if   platform == 'Amazon Linux':            os_name = 'AMAZON_LINUX'
-    elif platform == 'Amazon Linux AMI':        os_name = 'AMAZON_LINUX'
-    elif platform == 'Amazon Linux 2':          os_name = 'AMAZON_LINUX_2'
-    elif platform == 'Amazon Linux 2022':       os_name = 'AMAZON_LINUX_2022'
-    elif platform == 'Amazon Linux 2023':       os_name = 'AMAZON_LINUX_2023'
-    elif platform == 'Ubuntu':                  os_name = 'UBUNTU'
-    elif platform == 'Debian':                  os_name = 'DEBIAN'
-    elif platform == 'Suse':                    os_name = 'SUSE'
-    elif platform == 'CentOS Linux':            os_name = 'CENTOS'
-    elif platform == 'CentOS':                  os_name = 'CENTOS'
-    elif platform == 'Redhat Enterprise Linux': os_name = 'REDHAT_ENTERPRISE_LINUX'
-    elif platform == 'RHEL':                    os_name = 'REDHAT_ENTERPRISE_LINUX'
-    elif platform == 'Oracle Linux':            os_name = 'ORACLE_LINUX'
-    elif platform == 'Raspbian':                os_name = 'RASPBIAN'
-    elif platform == 'Rocky Linux':             os_name = 'ROCKY_LINUX'
-    elif platform == 'Alma Linux':              os_name = 'ALMA_LINUX'
-    elif platform == 'MacOS':                   os_name = 'MACOS'
-    elif platform == 'Windows':                 os_name = 'WINDOWS'
+    if platform == 'Amazon Linux':
+        os_name = 'AMAZON_LINUX'
+    elif platform == 'Amazon Linux AMI':
+        os_name = 'AMAZON_LINUX'
+    elif platform == 'Amazon Linux 2':
+        os_name = 'AMAZON_LINUX_2'
+    elif platform == 'Amazon Linux 2022':
+        os_name = 'AMAZON_LINUX_2022'
+    elif platform == 'Amazon Linux 2023':
+        os_name = 'AMAZON_LINUX_2023'
+    elif platform == 'Ubuntu':
+        os_name = 'UBUNTU'
+    elif platform == 'Debian':
+        os_name = 'DEBIAN'
+    elif platform == 'Suse':
+        os_name = 'SUSE'
+    elif platform == 'CentOS Linux':
+        os_name = 'CENTOS'
+    elif platform == 'CentOS':
+        os_name = 'CENTOS'
+    elif platform == 'Redhat Enterprise Linux':
+        os_name = 'REDHAT_ENTERPRISE_LINUX'
+    elif platform == 'RHEL':
+        os_name = 'REDHAT_ENTERPRISE_LINUX'
+    elif platform == 'Oracle Linux':
+        os_name = 'ORACLE_LINUX'
+    elif platform == 'Raspbian':
+        os_name = 'RASPBIAN'
+    elif platform == 'Rocky Linux':
+        os_name = 'ROCKY_LINUX'
+    elif platform == 'Alma Linux':
+        os_name = 'ALMA_LINUX'
+    elif platform == 'MacOS':
+        os_name = 'MACOS'
+    elif platform == 'Windows':
+        os_name = 'WINDOWS'
     else:
         os_name = platform
 
@@ -469,7 +501,7 @@ def get_operating_system(platform: str) -> str:
 
 
 def get_dic_item(list_of_dic: list, key: str, value: str) -> dict:
-    """Find item from a list of dictionaries by key and value"""
+    """Find item from a list of dictionaries by key and value."""
     return next((item for item in list_of_dic if item[key] == value), None)
 
 
@@ -490,7 +522,7 @@ def byte_to_kb(size: int):
 
 def format_date(date_field: datetime) -> str:
     """Format date field into string like DD/MM/YYYY HH:MM:SS UTC."""
-    return datetime.strptime(str(date_field), '%Y-%m-%d %H:%M:%S%z').strftime('%-d/%m/%y %-H:%M')
+    return datetime.strptime(str(date_field), '%Y-%m-%d %H:%M:%S%z').strftime('%-d/%m/%y %-H:%M')  # pylint: disable=line-too-long # noqa: E501
 
 
 def get_days_since(date: str) -> int:
@@ -517,9 +549,9 @@ def get_days_to(date: str) -> int:
     return diff.days
 
 
-###############################################################################
-################################# Paginator ###################################
-###############################################################################
+# ------------------------------------------------------------------------- #
+# ------------------------------ Paginator -------------------------------- #
+# ------------------------------------------------------------------------- #
 
 def paginate(client: object, method: str, **kwargs) -> list:
     """Paginate boto3 client methods."""
