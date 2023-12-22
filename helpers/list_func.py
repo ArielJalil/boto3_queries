@@ -61,11 +61,5 @@ def split_list(full_list: list, chunk_size: int) -> list:
 
 
 def is_in_the_list(items: list, item: str) -> bool:
-    """Check if an items exist in a given list."""
-    # if item in items:
-    #     response = True
-    # else:
-    #     response = False
-
-    # return response
+    """Check if an item exist in a given list."""
     return bool(item in items)
