@@ -17,7 +17,6 @@ from helpers.boto3_func import get_permission_set_detail, get_arn_resources, \
                                get_iam_usr_policies, \
                                get_active_accounts
 
-
 LOGGER = getLogger(__name__)
 
 
