@@ -14,7 +14,8 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 
 ## Query AWS Resources
 
-This python script will run a query of the selected AWS resource across all enabled regions in an Organization using parallel processing code, it certainly runs fast though.
+This python script will run a query of the selected AWS resource across all enabled regions in an
+ Organization using parallel processing code, it certainly runs fast though.
 
 Please update your specific AWS settings in the `helpers/config.py` file before run it:
 
@@ -35,4 +36,5 @@ Options:
 
 ## Author and Lincense
 
-This script has been written by [Ariel Jall](https://github.com/ArielJalil) and it is released under [GNU 3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
+This script has been written by [Ariel Jall](https://github.com/ArielJalil) and it is released under
+ [GNU 3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
