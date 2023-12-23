@@ -7,7 +7,7 @@ from logging import getLogger
 from datetime import datetime
 from dateutil.parser import parse  # pylint: disable=import-error
 from botocore.exceptions import ClientError, SSOTokenLoadError, \
-                                UnauthorizedSSOTokenError  # pylint: disable=import-error # noqa: E501
+                                UnauthorizedSSOTokenError  # pylint: disable=import-error
 
 from classes.looper import Looper
 from classes.assume_role import StsObject
@@ -53,7 +53,7 @@ def b3_client(account_id: str, service: str, region=config.REGION) -> object:
     return client
 
 
-def b3_resource(account_id: str, service: str, region='ap-southeast-2') -> object:  # noqa: E501
+def b3_resource(account_id: str, service: str, region='ap-southeast-2') -> object:
     """Get boto3 client service."""
     # root org account doesn't have the IAM Role used in the child accounts
     if account_id != config.SERVICE_ACCOUNT_ID:
@@ -78,7 +78,7 @@ def get_active_accounts() -> list:
     excluded_accounts = []   # Add a list of Account IDs to be excluded
     for account in list(paginate(org, 'list_accounts')):
         # if account['Status'] == 'ACTIVE':
-        if account['Status'] == 'ACTIVE' and account['Id'] not in excluded_accounts:  # noqa: E501
+        if account['Status'] == 'ACTIVE' and account['Id'] not in excluded_accounts:
             yield {
                 'AccountId': account['Id'],
                 'AccountAlias': account['Name']
@@ -136,7 +136,7 @@ def try_get_value(dictionary: dict, key: str) -> str:
     if ":" not in key:
         try:
             value = dictionary[key]
-        except:  # pylint: disable=bare-except # noqa: E722
+        except:  # pylint: disable=bare-except
             value = 'NoValue'
     else:
         r = ''
@@ -144,12 +144,12 @@ def try_get_value(dictionary: dict, key: str) -> str:
         if dic_keys[0] == 'DaysSince':
             try:
                 value = get_days_since(dictionary[dic_keys[1]])
-            except:  # pylint: disable=bare-except # noqa: E722
+            except:  # pylint: disable=bare-except
                 value = -1
         elif dic_keys[0] == 'DaysTo':
             try:
                 value = get_days_to(dictionary[dic_keys[1]])
-            except:  # pylint: disable=bare-except # noqa: E722
+            except:  # pylint: disable=bare-except
                 value = -1
         else:
             for k in dic_keys:  # Multiple dictionary keys
@@ -157,7 +157,7 @@ def try_get_value(dictionary: dict, key: str) -> str:
 
             try:
                 value = ast.literal_eval(f"dictionary{r}")
-            except:  # pylint: disable=bare-except # noqa: E722
+            except:  # pylint: disable=bare-except
                 value = 'NoValue'
 
     return value
@@ -168,7 +168,7 @@ def get_resource_tags(resource: str) -> list:
     try:
         tags = Tag(resource['Tags'])
         r_tag = tags.values(config.MANDATORY_TAGS)
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         r_tag = list(config.MANDATORY_TAGS.values())
         r_tag.append(len(list(config.MANDATORY_TAGS.values())))
 
@@ -187,7 +187,7 @@ def get_ec2_platform(dictionary: dict, key: str) -> str:
     """Check if ec2 platform is Windows or Linux."""
     try:
         platform = dictionary[key]
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         platform = 'Linux'
 
     return platform
@@ -198,7 +198,7 @@ def get_ec2_instance_profile(dictionary: dict, key: str) -> str:
     try:
         instance_profile = dictionary[key]
         instance_profile_arn = instance_profile['Arn']
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         instance_profile_arn = 'NoValue'
 
     return instance_profile_arn
@@ -250,7 +250,7 @@ def get_s3_tags(bucket: object) -> list:
     """Get s3 resource tags."""
     try:
         tags = bucket.tag_set
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         tags = None
 
     return tags
@@ -260,7 +260,7 @@ def get_user_tags(user: object) -> list:
     """Get User resource tags."""
     try:
         tags = user.tags
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         tags = None
 
     return tags
@@ -272,7 +272,7 @@ def get_last_used(access_key_access: dict) -> int:
         return get_days_since(
             access_key_access['AccessKeyLastUsed']['LastUsedDate']
         )
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         return -1
 
 
@@ -280,7 +280,7 @@ def get_user_location(user: dict) -> str:
     """Get SSO user location."""
     try:
         return user['Addresses'][0]['Formatted']
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         return ''
 
 
@@ -322,12 +322,12 @@ def get_iam_usr_groups(client: object, user: str) -> list:
         user_grp.append(grp['GroupName'])
 
         # Grab IAM Policies associated which each group: Inline and Managed
-        inline_grp_policies = client.list_group_policies(GroupName=grp['GroupName'])  # noqa: E501
+        inline_grp_policies = client.list_group_policies(GroupName=grp['GroupName'])
         for policy in inline_grp_policies['PolicyNames']:
             grp_policies.append(policy)
 
         # Managed policies
-        for policy in paginate(client, 'list_attached_group_policies', GroupName=grp['GroupName']):  # pylint: disable=line-too-long # noqa: E501
+        for policy in paginate(client, 'list_attached_group_policies', GroupName=grp['GroupName']):
             grp_policies.append(policy['PolicyName'])
 
     return user_grp, grp_policies
@@ -383,11 +383,11 @@ def get_tgw_att_subnets(r: dict, client: object, resource: object) -> dict:
                 sn_az = sn.availability_zone
                 try:
                     sn_tag_name = get_tag_value(sn.tags, 'Name')
-                except:  # pylint: disable=bare-except # noqa: E722
+                except:  # pylint: disable=bare-except
                     sn_tag_name = 'NoValue'
 
                 subnets += f"{vpc_id}|{sn_az}|{sn_tag_name},"
-            except:  # pylint: disable=bare-except # noqa: E722
+            except:  # pylint: disable=bare-except
                 subnets = None
     else:
         subnets = None
@@ -456,7 +456,7 @@ def get_tag_value(list_of_dic: list, key: str) -> dict:
     return 'NoValue'
 
 
-def get_operating_system(platform: str) -> str:  # pylint: disable=too-many-branches # noqa: E501
+def get_operating_system(platform: str) -> str:  # pylint: disable=too-many-branches
     """Translate platform name to operating system name for SSM api calls."""
     if platform == 'Amazon Linux':
         os_name = 'AMAZON_LINUX'
@@ -507,22 +507,22 @@ def get_dic_item(list_of_dic: list, key: str, value: str) -> dict:
 
 def byte_to_gb(size: int):
     """Tranform Bytes to GBs."""
-    return size/1024/1024/1024
+    return size / 1024 / 1024 / 1024
 
 
 def byte_to_mb(size: int):
     """Tranform Bytes to MBs."""
-    return size/1024/1024
+    return size / 1024 / 1024
 
 
 def byte_to_kb(size: int):
     """Tranform Bytes to KBs."""
-    return size/1024
+    return size / 1024
 
 
 def format_date(date_field: datetime) -> str:
     """Format date field into string like DD/MM/YYYY HH:MM:SS UTC."""
-    return datetime.strptime(str(date_field), '%Y-%m-%d %H:%M:%S%z').strftime('%-d/%m/%y %-H:%M')  # pylint: disable=line-too-long # noqa: E501
+    return datetime.strptime(str(date_field), '%Y-%m-%d %H:%M:%S%z').strftime('%-d/%m/%y %-H:%M')
 
 
 def get_days_since(date: str) -> int:

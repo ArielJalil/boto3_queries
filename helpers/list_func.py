@@ -42,7 +42,7 @@ def get_grouped_items(list_of_dic: list, group_by: str, sort_by: str) -> list:
 
     sorted_list = get_sorted_items(list_of_dic, group_by)
 
-    for group_key, grouped_items in groupby(sorted_list, key=lambda k: k[group_by]):  # noqa: E501
+    for group_key, grouped_items in groupby(sorted_list, key=lambda k: k[group_by]):
 
         item_group = {
             "grouped_by": group_key,
