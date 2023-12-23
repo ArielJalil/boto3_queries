@@ -1,16 +1,11 @@
 repos:
-# - repo: https://github.com/markdownlint/markdownlint
-#   rev: 1.0.0
-#   hooks: Run markdownlint on your Markdown files
-#     - id: markdownlint
-#       name: Run markdownlint on your Markdown files
-
+# MarkDown
 - repo: https://github.com/igorshubovych/markdownlint-cli
   rev: v0.38.0
   hooks:
   - id: markdownlint
     name: Run markdownlint on your Markdown files
-
+# CommonTextIssues
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.5.0
   hooks:
@@ -30,6 +25,7 @@ repos:
       name: Check whether files parse as valid python
     - id: check-docstring-first
       name: Checks if code is before the docstring
+# Python
 - repo: https://github.com/PyCQA/docformatter
   rev: v1.7.5
   hooks:
@@ -47,8 +43,8 @@ repos:
       name: Flake8 - Style Guide
       types: [python]
       args:
-        - --max-line-length=100        # PyLint default line length
-        - --ignore=E126, E501, E722    # line over-indented, line-too-long, bare-except
+        - --max-line-length=100        # Matching with PyLint default line length
+        - --ignore=E126, E501, E722    # line-over-indented, line-too-long, bare-except
 - repo: https://github.com/PyCQA/pylint
   rev: v3.0.3
   hooks:
