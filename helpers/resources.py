@@ -20,7 +20,7 @@ from helpers.boto3_func import get_permission_set_detail, get_arn_resources, \
 LOGGER = getLogger(__name__)
 
 
-def get_resources(aws: dict, query: str) -> list:  # pylint: disable=too-many-branches, too-many-statements, line-too-long # noqa: E501
+def get_resources(aws: dict, query: str) -> list:  # pylint: disable=too-many-branches, too-many-statements, line-too-long
     """Get the fields of interest in a list of dictionaries."""
 
     paginator = SETUP[query]['Paginator']
@@ -211,7 +211,7 @@ def paginate_dynamodb(aws: dict, client: object, method: str) -> list:
         for r in page:
             r['CustomTableName'] = r
             r['Tags'] = client.list_tags_of_resource(
-                ResourceArn=f"arn:dynamodb:{aws['Region']}:{aws['AccountId']}:table/{r}"  # pylint: disable=line-too-long # noqa: E501
+                ResourceArn=f"arn:dynamodb:{aws['Region']}:{aws['AccountId']}:table/{r}"
             )
             yield r
 
@@ -247,7 +247,7 @@ def paginate_elb_v2(client: object, method: str) -> list:
     for page in paginator.paginate().result_key_iters():
         for r in page:
             target_groups = []
-            for tg in paginate(client, 'describe_target_groups', LoadBalancerArn=r['LoadBalancerArn']):  # pylint: disable=line-too-long # noqa: E501
+            for tg in paginate(client, 'describe_target_groups', LoadBalancerArn=r['LoadBalancerArn']):  # pylint: disable=line-too-long
                 target_groups.append(
                     f"{tg['TargetGroupName']}_({tg['TargetType']})\n"
                 )
@@ -343,7 +343,7 @@ def paginate_route_table(client: object, method: str) -> list:
             # List subnet/gateway associated with the route table
             associations = ''
             for a in i['Associations']:
-                associations += f"{a['AssociationState']['State']};{a['Main']};{try_get_value(a, 'SubnetId')};{try_get_value(a, 'GatewayId')}\n"  # pylint: disable=line-too-long # noqa: E501
+                associations += f"{a['AssociationState']['State']};{a['Main']};{try_get_value(a, 'SubnetId')};{try_get_value(a, 'GatewayId')}\n"  # pylint: disable=line-too-long
 
             i['CustomPropagativeVgwId'] = propagative_vgw_id
             i['CustomCountAssociations'] = len(i['Associations'])
@@ -363,9 +363,9 @@ def paginate_ssm_patching(client: object, method: str) -> list:
     paginator = client.get_paginator(method)
 
     for pg in paginate(client, 'describe_patch_groups'):
-        for page in paginator.paginate(PatchGroup=pg['PatchGroup']).result_key_iters():  # pylint: disable=line-too-long # noqa: E501
+        for page in paginator.paginate(PatchGroup=pg['PatchGroup']).result_key_iters():
             for i in page:
-                i['CustomOperatingSystem'] = pg['BaselineIdentity']['OperatingSystem']  # pylint: disable=line-too-long # noqa: E501
+                i['CustomOperatingSystem'] = pg['BaselineIdentity']['OperatingSystem']
                 vm_from_inventory = get_dic_item(
                     ssm_inventory,
                     'InstanceId',
@@ -391,7 +391,7 @@ def paginate_ssm_patching(client: object, method: str) -> list:
                 else:
                     i['CustomIsInSsmInventory'] = False
 
-                if i['CustomOperatingSystem'] == platform and i['CustomIsInSsmInventory'] is True:  # pylint: disable=line-too-long # noqa: E501
+                if i['CustomOperatingSystem'] == platform and i['CustomIsInSsmInventory'] is True:
                     yield i
 
 
@@ -405,16 +405,16 @@ def paginate_iam_user(aws: dict, client: object, method: str) -> list:
             user = resource.User(r['UserName'])
 
             # Check Access Keys status
-            r['accesss_key_1'] = r['status_key_1'] = r['days_since_creation_key_1'] = r['last_used_key_1'] = None  # pylint: disable=line-too-long # noqa: E501
-            r['accesss_key_2'] = r['status_key_2'] = r['days_since_creation_key_2'] = r['last_used_key_2'] = None  # pylint: disable=line-too-long # noqa: E501
+            r['accesss_key_1'] = r['status_key_1'] = r['days_since_creation_key_1'] = r['last_used_key_1'] = None  # pylint: disable=line-too-long
+            r['accesss_key_2'] = r['status_key_2'] = r['days_since_creation_key_2'] = r['last_used_key_2'] = None  # pylint: disable=line-too-long
             access_keys = list(
                 paginate(client, 'list_access_keys', UserName=r['UserName'])
             )
             for k in access_keys:   # access_keys can have from none to 2 items
                 if access_keys.index(k) == 0:
-                    r['accesss_key_1'], r['status_key_1'], r['days_since_creation_key_1'], r['last_used_key_1'] = get_access_key(k, client)  # pylint: disable=line-too-long # noqa: E501
+                    r['accesss_key_1'], r['status_key_1'], r['days_since_creation_key_1'], r['last_used_key_1'] = get_access_key(k, client)  # pylint: disable=line-too-long
                 else:
-                    r['accesss_key_2'], r['status_key_2'], r['days_since_creation_key_2'], r['last_used_key_2'] = get_access_key(k, client)  # pylint: disable=line-too-long # noqa: E501
+                    r['accesss_key_2'], r['status_key_2'], r['days_since_creation_key_2'], r['last_used_key_2'] = get_access_key(k, client)  # pylint: disable=line-too-long
 
             # Grab User specific IAM Policies/Groups
             user_policies = get_iam_usr_policies(client, r['UserName'])
@@ -436,7 +436,7 @@ def paginate_iam_sso_user(client: object, method: str, **kwargs) -> list:
     for page in paginator.paginate(**kwargs).result_key_iters():
         for user in page:
             group_ids = []
-            for group_id in paginate(client, 'list_group_memberships_for_member', IdentityStoreId=config.IDENTITY_STORE_ID, MemberId={'UserId': user['UserId']}):  # pylint: disable=line-too-long # noqa: E501
+            for group_id in paginate(client, 'list_group_memberships_for_member', IdentityStoreId=config.IDENTITY_STORE_ID, MemberId={'UserId': user['UserId']}):  # pylint: disable=line-too-long
                 sso_group = get_dic_item(
                     sso_groups,
                     'GroupId',
@@ -450,7 +450,7 @@ def paginate_iam_sso_user(client: object, method: str, **kwargs) -> list:
             yield user
 
 
-def paginate_iam_sso_account_assignments(aws: dict, client: object, method: str) -> list:  # pylint: disable=line-too-long # noqa: E501
+def paginate_iam_sso_account_assignments(aws: dict, client: object, method: str) -> list:
     """Paginate IAM SSO Account Assignments and add extra values."""
     aws_accounts = get_active_accounts()
     for a in aws_accounts:
