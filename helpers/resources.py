@@ -337,7 +337,7 @@ def paginate_route_table(client: object, method: str) -> list:
             if propagative_vgw != 'NoValue':
                 try:
                     propagative_vgw_id = propagative_vgw[0]['GatewayId']
-                except:  # pylint: disable=bare-except # noqa: E722
+                except:  # pylint: disable=bare-except
                     propagative_vgw_id = ''
 
             # List subnet/gateway associated with the route table
