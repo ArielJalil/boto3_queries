@@ -11,7 +11,7 @@ repos:
   - id: markdownlint
     name: Run markdownlint on your Markdown files
     args:
-      - --disable MD013,DEP0040
+      - --disable MD013
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.5.0
