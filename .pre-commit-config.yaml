@@ -42,15 +42,3 @@ repos:
   hooks:
     - id: pylint
       name: Pylint - Static code analyzer
-
-# - repo: local
-#   hooks:
-#     - id: custom-comment-check
-#       name: Check for Required Comments
-#       entry: sh
-#       args: ["-c", "grep -r 'TODO' ."]
-
-# In this example, we're using the grep command to search for the string "TODO" in all files in the
-# current directory and its subdirectories. This will catch any instances of the "TODO" comment
-# that might indicate unfinished code or tasks.
-# Ref: https://dev.to/techishdeep/maximize-your-python-efficiency-with-pre-commit-a-complete-but-concise-guide-39a5
