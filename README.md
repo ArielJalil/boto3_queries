@@ -12,6 +12,13 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 
 * A valid AWS cli profile (either SSO or IAM user)
 
+## Consider to install pre-commit
+
+If you are planning to enhance this code it is highly recommended to install [pre-commit](https://pre-commit.com/index.html)
+ to speed up development and keep some standard coding style.
+
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
 ## Query AWS Resources
 
 This python script will run a query of the selected AWS resource across all enabled regions in an
