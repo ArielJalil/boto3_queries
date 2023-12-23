@@ -25,7 +25,7 @@ def query_by_account(aws: dict) -> list:
 
     try:     # Check if the query is multi-region or not
         regions = SETUP[config.QUERY]['Region']
-    except:  # pylint: disable=bare-except # noqa: E722
+    except:  # pylint: disable=bare-except
         regions = regions_to_query(config.REGION, aws['AccountId'])
 
     # Generate a list with required region/s for the query
@@ -56,9 +56,9 @@ def resources(aws: dict) -> list:
     return csv_rows
 
 
-def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argument # noqa: E501
+def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argument
     """Validate AWS Account ID is 12 integer digits."""
-    if not match('\d{12}', value):  # pylint: disable=anomalous-backslash-in-string # noqa: W605, E501
+    if not match('\d{12}', value):  # pylint: disable=anomalous-backslash-in-string # noqa: W605
         raise click.BadParameter('AWS account ID must be 12 digits.')
 
     return value
