@@ -28,7 +28,7 @@ def _split_list(full_list: list, chunk_size: int) -> list:
 class SsmRunCommand:
     """Manage boto3 session."""
 
-    def __init__(self, ssm_client: object, filters: list, command_to_run: str) -> None:  # pylint: disable=line-too-long # noqa: E501
+    def __init__(self, ssm_client: object, filters: list, command_to_run: str) -> None:
         """Initialize class variables."""
         self.ssm = ssm_client
         self.filters = filters
@@ -81,7 +81,7 @@ class SsmRunCommand:
 
             if e.response['Error']['Code'] == 'UnsupportedPlatformType':
                 LOGGER.error(
-                    "Unsupported platform (Windows) instance found at batch:\n%s", ec2_ids  # pylint: disable=line-too-long # noqa: E501
+                    "Unsupported platform (Windows) instance found at batch:\n%s", ec2_ids
                 )
             else:
                 LOGGER.error("ERROR: %s", e)

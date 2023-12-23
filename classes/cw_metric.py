@@ -14,7 +14,7 @@ class CwMetric:
         """Set class variables."""
         self.client = client
 
-    def get_s3_metric(self, bucket: str, metric: str, stg_type: str, statistic='Sum') -> dict:  # pylint: disable=line-too-long # noqa: E501
+    def get_s3_metric(self, bucket: str, metric: str, stg_type: str, statistic='Sum') -> dict:
         """Query S3 Namespace Metric."""
         result = self.client.get_metric_statistics(
             Namespace="AWS/S3",
@@ -31,7 +31,7 @@ class CwMetric:
                 'Value': result["Datapoints"][0][statistic],
                 'Unit': result['Datapoints'][0]['Unit']
             }
-        except:  # pylint: disable=bare-except # noqa: E722
+        except:  # pylint: disable=bare-except
             return {
                 'Value': 0,
                 'Unit': None

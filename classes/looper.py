@@ -24,7 +24,7 @@ def catch_errors(func: object) -> object:
             result = func(arg)
 
         except botocore.exceptions.ClientError as err:
-            print(f"{'~' * line_long}\n{arg}\n{'~' * line_long}\n\n{err}\n{'-' * line_long}")  # pylint: disable=line-too-long # noqa: E501
+            print(f"{'~' * line_long}\n{arg}\n{'~' * line_long}\n\n{err}\n{'-' * line_long}")
             if err.response['Error']['Code'] == 'AccessDeniedException':
                 LOGGER.error("Message: %s", err.response['Message'])
             elif err.response['Error']['Code'] == 'InvalidAccessException':
@@ -36,7 +36,7 @@ def catch_errors(func: object) -> object:
             print('-' * line_long)
 
         except Exception as err:  # pylint: disable=broad-exception-caught
-            print(f"{'~' * line_long}\n{arg}\n{'~' * line_long}\n\n{err}\n{'-' * line_long}")  # pylint: disable=line-too-long # noqa: E501
+            print(f"{'~' * line_long}\n{arg}\n{'~' * line_long}\n\n{err}\n{'-' * line_long}")
             traceback.print_tb(err.__traceback__)
             print('-' * line_long)
 
@@ -124,7 +124,7 @@ class Looper:
         results = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_accounts = {
-                executor.submit(_run_func, account): account for account in self.items  # noqa: E501
+                executor.submit(_run_func, account): account for account in self.items
             }
             for future in concurrent.futures.as_completed(future_accounts):
                 items.append(future_accounts[future])
@@ -133,13 +133,13 @@ class Looper:
                         results += future.result()
                         result_counter += 1
 
-                except Exception as exc:  # pylint: disable=broad-exception-caught # noqa: E501
+                except Exception as exc:  # pylint: disable=broad-exception-caught
                     LOGGER.error(exc)
 
         self.report_summary(len(items), result_counter, len(results))
         return results
 
-    def report_summary(self, items: int, with_result: int, results: int) -> None:  # noqa: E501
+    def report_summary(self, items: int, with_result: int, results: int) -> None:
         """Display report summary."""
         print(f"\nNumber of processed items    : {items}")
         print(f"Number of items with results : {with_result}")

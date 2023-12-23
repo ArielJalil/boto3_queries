@@ -35,7 +35,7 @@ class StsObject:
 
         return sts
 
-    def get_client(self, aws_service: str, aws_region='ap-southeast-2') -> object:  # noqa: E501
+    def get_client(self, aws_service: str, aws_region='ap-southeast-2') -> object:
         """Set boto3 client using STS token."""
         client = None
         sts = self.assume_role()
@@ -45,7 +45,7 @@ class StsObject:
                     aws_service,
                     aws_region,
                     aws_access_key_id=sts['Credentials']['AccessKeyId'],
-                    aws_secret_access_key=sts['Credentials']['SecretAccessKey'],  # noqa: E501
+                    aws_secret_access_key=sts['Credentials']['SecretAccessKey'],
                     aws_session_token=sts['Credentials']['SessionToken']
                 )
             except ClientError as erro:
@@ -55,7 +55,7 @@ class StsObject:
 
         return client
 
-    def get_resource(self, aws_service: str, region='ap-southeast-2') -> object:  # noqa: E501
+    def get_resource(self, aws_service: str, region='ap-southeast-2') -> object:
         """Set boto3 resource using STS token."""
         resource = None
         sts = self.assume_role()

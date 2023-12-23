@@ -38,7 +38,7 @@ class CsvHandler:
     def to_list(self) -> list:
         """Import CSV file to a list of strings."""
         try:
-            with open(f"{self.file_name}.csv", newline='', encoding='utf-8') as f:  # noqa: E501
+            with open(f"{self.file_name}.csv", newline='', encoding='utf-8') as f:
                 reader = csv.reader(f)
                 data = list(reader)
 
