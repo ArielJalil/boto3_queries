@@ -2,10 +2,8 @@
 """Class to handle SSM service."""
 
 import logging
-
 from time import sleep
-from botocore.exceptions import ClientError
-
+from botocore.exceptions import ClientError  # pylint: disable=import-error
 from helpers.boto3_func import paginate
 
 LOGGER = logging.getLogger(__name__)
@@ -13,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _get_ec2_ids(inventory: list) -> list:
     """Extract ec2 IDs from live instances in the ssm inventory."""
-    ec2_ids = list()
+    ec2_ids = []
     for i in inventory:
         if i['PingStatus'] == 'Online':
             ec2_ids.append(i['InstanceId'])
@@ -59,7 +57,7 @@ class SsmRunCommand:
     def run_cmd_on_targets(self, ec2_ids: list) -> str:
         """Issue send_command API call to SSM service."""
         try:
-            result =  self.ssm.send_command(
+            result = self.ssm.send_command(
                 Targets=[
                     {
                         'Key': 'InstanceIds',
@@ -78,14 +76,17 @@ class SsmRunCommand:
             )
         except ClientError as e:
             if e.response['Error']['Code'] == 'InvalidInstanceId':
-                LOGGER.error(f"Instance ID batch failed:\n{ec2_ids}")
+                LOGGER.error("Instance ID batch failed:\n%s", ec2_ids)
                 return ''
-            elif e.response['Error']['Code'] == 'UnsupportedPlatformType':
-                LOGGER.error(f"Unsupported platform (Windows) instance found at batch:\n{ec2_ids}")
-                return ''
+
+            if e.response['Error']['Code'] == 'UnsupportedPlatformType':
+                LOGGER.error(
+                    "Unsupported platform (Windows) instance found at batch:\n%s", ec2_ids
+                )
             else:
-                LOGGER.error(f"ERROR: {e}")
-                return ''
+                LOGGER.error("ERROR: %s", e)
+
+            return ''
 
         return result['Command']['CommandId']
 
@@ -111,7 +112,7 @@ class SsmRunCommand:
             )
             cmd_out = cmd_out + list_command_invocations['CommandInvocations']
 
-        cmd_outs = list()
+        cmd_outs = []
         for out in cmd_out:
             cmd_outs.append(out['CommandPlugins'][0]['Output'].split('\n'))
 
@@ -119,7 +120,7 @@ class SsmRunCommand:
 
     def run_cmd(self) -> list:
         """Gathe SSM Run Command output from all targets."""
-        cmd_outs = list()
+        cmd_outs = []
         ec2_ids = _get_ec2_ids(self.get_ec2_inventory())
 
         # Split the list of ec2 id targets in chunks of 10

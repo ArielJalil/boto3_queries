@@ -2,16 +2,16 @@
 """Class for handle STS Assume Role on AWS services."""
 
 import logging
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError  # pylint: disable=import-error
 
 LOGGER = logging.getLogger(__name__)
 
 
 class StsObject:
-    """Assume role with STS for specified service."""
+    """Assume IAM role with STS for specified service."""
 
     def __init__(
-        self, session: object, account_id: str, role:str, duration=900
+        self, session: object, account_id: str, role: str, duration=900
     ) -> object:
         """Initialize class variables."""
         self.session = session
@@ -30,7 +30,7 @@ class StsObject:
                 DurationSeconds=self.duration
             )
         except ClientError as erro:
-            LOGGER.error(f"STS assume role failed: \n{erro}")
+            LOGGER.error("STS assume role failed: \n%s", erro)
             sts = None
 
         return sts
@@ -49,11 +49,13 @@ class StsObject:
                     aws_session_token=sts['Credentials']['SessionToken']
                 )
             except ClientError as erro:
-                LOGGER.error(f"Boto3 client {aws_service} service failed:\n{erro}")
+                LOGGER.error(
+                    "Boto3 client %s service failed:\n%s", aws_service, erro
+                )
 
         return client
 
-    def get_resource(self, aws_service: str, region='ap-southeast-2') ->object:
+    def get_resource(self, aws_service: str, region='ap-southeast-2') -> object:
         """Set boto3 resource using STS token."""
         resource = None
         sts = self.assume_role()
@@ -66,6 +68,8 @@ class StsObject:
                 aws_session_token=sts['Credentials']['SessionToken']
             )
         except ClientError as erro:
-            LOGGER.error(f"Boto3 resource for {aws_service} service failed:\n{erro}")
+            LOGGER.error(
+                "Boto3 resource for %s service failed:\n%s", aws_service, erro
+            )
 
         return resource

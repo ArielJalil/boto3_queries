@@ -5,10 +5,11 @@ import csv
 import os
 import logging
 
-import helpers.config   as     config
-from datetime           import datetime
+from datetime import datetime
+from helpers import config
 
 LOGGER = logging.getLogger(__name__)
+
 
 class CsvHandler:
     """Manage CSV files."""
@@ -30,11 +31,9 @@ class CsvHandler:
                 writer.writerow(row)
 
         if bool(os.path.exists(full_name) and os.path.getsize(full_name) > 0):
-            LOGGER.info(f'CSV file {full_name} has been created.')
+            LOGGER.info('CSV file %s has been created.', full_name)
         else:
             LOGGER.error('Whach out. The CSV file creation failed.')
-
-        return
 
     def to_list(self) -> list:
         """Import CSV file to a list of strings."""
@@ -44,7 +43,7 @@ class CsvHandler:
                 data = list(reader)
 
         except IOError as e:
-            LOGGER.error(f"File not found. {e}")
+            LOGGER.error("File not found. %s", e)
             data = None
 
         return data

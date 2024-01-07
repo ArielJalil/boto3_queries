@@ -5,7 +5,7 @@ from itertools import groupby
 
 
 def get_dic_item(list_of_dic: list, key: str, value: str) -> dict:
-    """Find item from a list of dictionaries by key and value"""
+    """Find item from a list of dictionaries by key and value."""
     return next(
         (item for item in list_of_dic if item[key] == value),
         None
@@ -22,7 +22,8 @@ def get_dic_item_by_key_pair(list_of_dic: list, key_pair: dict) -> dict:
 
 
 def sort_dic_list(list_of_dic: list, key: str) -> list:
-    """Generate a sorted list of values of an specific key from a list of dictionaries."""
+    """Generate a sorted list of values of an specific key from a list of
+    dictionaries."""
     return sorted(
         [x[key] for x in list_of_dic]
     )
@@ -59,11 +60,6 @@ def split_list(full_list: list, chunk_size: int) -> list:
         yield full_list[i:i + chunk_size]
 
 
-def is_in_the_list(items: list, item:str) -> bool:
-    """Check if an items exist in a given list."""
-    if item in items:
-        response = True
-    else:
-        response = False
-
-    return response
+def is_in_the_list(items: list, item: str) -> bool:
+    """Check if an item exist in a given list."""
+    return bool(item in items)

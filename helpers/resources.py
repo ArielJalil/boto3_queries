@@ -1,16 +1,26 @@
 # -*- coding: utf-8 -*-
 """Helper functions for Looper class."""
 
-from logging            import getLogger
-from classes.cw_metric  import CwMetric
-from helpers            import SETUP
-from helpers.boto3_func import *
-import helpers.config   as     config
+from logging import getLogger
+from classes.cw_metric import CwMetric
+from helpers import SETUP, config
+from helpers.boto3_func import get_permission_set_detail, get_arn_resources, \
+                               get_permission_set_details, get_user_location, \
+                               get_ec2_instance_profile, byte_to_gb, \
+                               get_patching_enabled_resources, get_volume, \
+                               get_ssm_ec2_ids_inventory, get_ec2_platform, \
+                               get_backup_enabled_resources, get_dhcp_config, \
+                               get_tgw_att_subnets, try_get_value, paginate, \
+                               get_routes, get_operating_system, b3_resource, \
+                               get_dic_item, get_iam_usr_groups, b3_client, \
+                               get_user_tags, get_access_key, get_s3_tags, \
+                               get_iam_usr_policies, \
+                               get_active_accounts
 
 LOGGER = getLogger(__name__)
 
 
-def get_resources(aws: dict, query: str) -> list:
+def get_resources(aws: dict, query: str) -> list:  # pylint: disable=too-many-branches, too-many-statements, line-too-long
     """Get the fields of interest in a list of dictionaries."""
 
     paginator = SETUP[query]['Paginator']
@@ -27,14 +37,17 @@ def get_resources(aws: dict, query: str) -> list:
                 'Name': 'instance-state-name',
                 'Values': ['pending', 'running', 'stopping', 'stopped']
             }]
-            resources = paginate_ec2(aws, client, paginator, Filters=ec2_filter)
-
+            resources = paginate_ec2(
+                aws, client, paginator, Filters=ec2_filter
+            )
         elif query == 'ebs_volume_snap':
-            resources = paginate(client, paginator, OwnerIds=[aws['AccountId']])
-
+            resources = paginate(
+                client, paginator, OwnerIds=[aws['AccountId']]
+            )
         elif query == 'ami':
-            resources = paginate(client, paginator, Owners=[aws['AccountId']])
-
+            resources = paginate(
+                client, paginator, Owners=[aws['AccountId']]
+            )
         elif query == 'elb':
             resources = paginate_elb(client, paginator)
 
@@ -51,21 +64,32 @@ def get_resources(aws: dict, query: str) -> list:
             resources = paginate_dynamodb(aws, client, paginator)
 
         elif query == 'aws_backup':
-            resources = get_arn_resources(paginate(client, paginator), 'ResourceArn')
-
+            resources = get_arn_resources(
+                paginate(client, paginator),
+                'ResourceArn'
+            )
         elif query == 'tag_editor':
-            resources = get_arn_resources(paginate(client, paginator), 'ResourceARN')
-
+            resources = get_arn_resources(
+                paginate(client, paginator),
+                'ResourceARN'
+            )
         elif query == 'aws_config':
-            resources = paginate(client, paginator, resourceType='AWS::EC2::Instance', includeDeletedResources=False)
-
+            resources = paginate(
+                client,
+                paginator,
+                resourceType='AWS::EC2::Instance',
+                includeDeletedResources=False
+            )
         elif query == 'health':
             event_filters = {
                 'eventTypeCategories': ['scheduledChange'],
                 'eventStatusCodes': ['open', 'upcoming']
             }
-            resources = paginate_health(client, paginator, filter=event_filters)
-
+            resources = paginate_health(
+                client,
+                paginator,
+                filter=event_filters
+            )
         elif query == 'tgw_attach':
             resources = paginate_tgw_attach(aws, client, paginator)
 
@@ -82,18 +106,31 @@ def get_resources(aws: dict, query: str) -> list:
             resources = paginate_iam_user(aws, client, paginator)
 
         elif query == 'iam_sso_user':
-            resources = paginate_iam_sso_user(client, paginator, IdentityStoreId=config.IDENTITY_STORE_ID)
-
+            resources = paginate_iam_sso_user(
+                client,
+                paginator,
+                IdentityStoreId=config.IDENTITY_STORE_ID
+            )
         elif query == 'iam_sso_group':
-            resources = paginate(client, paginator, IdentityStoreId=config.IDENTITY_STORE_ID)
-
+            resources = paginate(
+                client,
+                paginator,
+                IdentityStoreId=config.IDENTITY_STORE_ID
+            )
         elif query == 'iam_sso_permission_sets':
-            permission_sets = paginate(client, paginator, InstanceArn=config.SSO_INSTANCE_ARN)
+            permission_sets = paginate(
+                client,
+                paginator,
+                InstanceArn=config.SSO_INSTANCE_ARN
+            )
             resources = get_permission_set_details(client, permission_sets)
 
         elif query == 'iam_sso_account_assignments':
-            resources = paginate_iam_sso_account_assignments(aws, client, paginator)
-
+            resources = paginate_iam_sso_account_assignments(
+                aws,
+                client,
+                paginator
+            )
         else:
             resources = paginate(client, paginator)
     else:
@@ -102,8 +139,14 @@ def get_resources(aws: dict, query: str) -> list:
         if query == 's3_bucket':
             resources = s3_bucket_query(aws, query, boto3_method)
         elif query == 'ram':
-            response = boto3_method(resourceOwner='SELF', resourceRegionScope='REGIONAL')
-            resources = get_arn_resources(response[SETUP[query]['ResponseItem']], 'arn')
+            response = boto3_method(
+                resourceOwner='SELF',
+                resourceRegionScope='REGIONAL'
+            )
+            resources = get_arn_resources(
+                response[SETUP[query]['ResponseItem']],
+                'arn'
+            )
         else:
             response = boto3_method()
             resources = response[SETUP[query]['ResponseItem']]
@@ -126,7 +169,7 @@ def s3_bucket_query(aws: dict, query: str, boto3_method: object) -> list:
         tags = s3.BucketTagging(b['Name'])
         b['Tags'] = get_s3_tags(tags)
 
-        yield(b)
+        yield [b]
 
 
 def paginate_ec2(aws: dict, client: object, method: str, **kwargs) -> list:
@@ -138,7 +181,7 @@ def paginate_ec2(aws: dict, client: object, method: str, **kwargs) -> list:
     ssm = b3_client(aws['AccountId'], 'ssm', region=aws['Region'])
 
     # Get list of instances enrolled for other services
-    bkp_ena_ids   = list(get_backup_enabled_resources(bkp))
+    bkp_ena_ids = list(get_backup_enabled_resources(bkp))
     patch_ena_ids = list(get_patching_enabled_resources(ssm))
     ssm_inventory = list(get_ssm_ec2_ids_inventory(ssm))
 
@@ -148,10 +191,15 @@ def paginate_ec2(aws: dict, client: object, method: str, **kwargs) -> list:
                 r['IsAwsBuckupEnabled'] = bool(r['InstanceId'] in bkp_ena_ids)
                 r['IsSsmPatchEnabled'] = bool(r['InstanceId'] in patch_ena_ids)
                 r['IsSsmAgentEnabled'] = bool(r['InstanceId'] in ssm_inventory)
-                r['VolumeCount'], r['VolumeSize'] = get_volume(client, r['BlockDeviceMappings'])
+                r['VolumeCount'], r['VolumeSize'] = get_volume(
+                    client,
+                    r['BlockDeviceMappings']
+                )
                 r['Platform'] = get_ec2_platform(r, 'Platform')
-                r['IamInstanceProfile'] = get_ec2_instance_profile(r, 'IamInstanceProfile')
-
+                r['IamInstanceProfile'] = get_ec2_instance_profile(
+                    r,
+                    'IamInstanceProfile'
+                )
                 yield r
 
 
@@ -184,7 +232,7 @@ def paginate_elb(client: object, method: str) -> list:
 
     for page in paginator.paginate().result_key_iters():
         for r in page:
-            instances = list()
+            instances = []
             for i in r['Instances']:
                 instances.append(i['InstanceId'])
 
@@ -198,16 +246,23 @@ def paginate_elb_v2(client: object, method: str) -> list:
 
     for page in paginator.paginate().result_key_iters():
         for r in page:
-            target_groups = list()
-            for tg in paginate(client, 'describe_target_groups', LoadBalancerArn=r['LoadBalancerArn']):
-                target_groups.append(f"{tg['TargetGroupName']}_({tg['TargetType']})\n")
-                tg_health = client.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                targets = list()
+            target_groups = []
+            for tg in paginate(client, 'describe_target_groups', LoadBalancerArn=r['LoadBalancerArn']):  # pylint: disable=line-too-long
+                target_groups.append(
+                    f"{tg['TargetGroupName']}_({tg['TargetType']})\n"
+                )
+                tg_health = client.describe_target_health(
+                    TargetGroupArn=tg['TargetGroupArn']
+                )
+                targets = []
                 for t in tg_health['TargetHealthDescriptions']:
-                    targets.append(f"{t['Target']['Id']}_({t['TargetHealth']['State']})\n")
+                    targets.append(
+                        f"{t['Target']['Id']}_({t['TargetHealth']['State']})\n"
+                    )
 
             r['CustomTargetGroups'] = "".join(x for x in target_groups)
             r['CustomTargets'] = "".join(x for x in targets)
+
             yield r
 
 
@@ -255,9 +310,18 @@ def paginate_vpc_dhcp(client: object, method: str) -> list:
 
     for page in paginator.paginate().result_key_iters():
         for r in page:
-            r['CustomDnsDomains'] = get_dhcp_config(r['DhcpConfigurations'], 'domain-name')
-            r['CustomDnsServers'] = get_dhcp_config(r['DhcpConfigurations'], 'domain-name-servers')
-            r['CustomNtpServers'] = get_dhcp_config(r['DhcpConfigurations'], 'ntp-servers')
+            r['CustomDnsDomains'] = get_dhcp_config(
+                r['DhcpConfigurations'],
+                'domain-name'
+            )
+            r['CustomDnsServers'] = get_dhcp_config(
+                r['DhcpConfigurations'],
+                'domain-name-servers'
+            )
+            r['CustomNtpServers'] = get_dhcp_config(
+                r['DhcpConfigurations'],
+                'ntp-servers'
+            )
 
             yield r
 
@@ -273,13 +337,13 @@ def paginate_route_table(client: object, method: str) -> list:
             if propagative_vgw != 'NoValue':
                 try:
                     propagative_vgw_id = propagative_vgw[0]['GatewayId']
-                except: # pylint: disable=broad-except
+                except:  # pylint: disable=bare-except
                     propagative_vgw_id = ''
 
             # List subnet/gateway associated with the route table
             associations = ''
             for a in i['Associations']:
-                associations += f"{a['AssociationState']['State']};{a['Main']};{try_get_value(a, 'SubnetId')};{try_get_value(a, 'GatewayId')}\n"
+                associations += f"{a['AssociationState']['State']};{a['Main']};{try_get_value(a, 'SubnetId')};{try_get_value(a, 'GatewayId')}\n"  # pylint: disable=line-too-long
 
             i['CustomPropagativeVgwId'] = propagative_vgw_id
             i['CustomCountAssociations'] = len(i['Associations'])
@@ -302,17 +366,32 @@ def paginate_ssm_patching(client: object, method: str) -> list:
         for page in paginator.paginate(PatchGroup=pg['PatchGroup']).result_key_iters():
             for i in page:
                 i['CustomOperatingSystem'] = pg['BaselineIdentity']['OperatingSystem']
-                vm_from_inventory = get_dic_item(ssm_inventory, 'InstanceId', i['InstanceId'])
-                i['CustomName'] = try_get_value(vm_from_inventory, 'Name')
-                i['CustomComputerName'] = try_get_value(vm_from_inventory, 'ComputerName')
-                i['CustomPlatformVersion'] = try_get_value(vm_from_inventory, 'PlatformVersion')
+                vm_from_inventory = get_dic_item(
+                    ssm_inventory,
+                    'InstanceId',
+                    i['InstanceId']
+                )
+                i['CustomName'] = try_get_value(
+                    vm_from_inventory,
+                    'Name'
+                )
+                i['CustomComputerName'] = try_get_value(
+                    vm_from_inventory,
+                    'ComputerName'
+                )
+                i['CustomPlatformVersion'] = try_get_value(
+                    vm_from_inventory,
+                    'PlatformVersion'
+                )
                 if vm_from_inventory:
-                    platform = get_operating_system(vm_from_inventory['PlatformName'])
+                    platform = get_operating_system(
+                        vm_from_inventory['PlatformName']
+                    )
                     i['CustomIsInSsmInventory'] = True
                 else:
                     i['CustomIsInSsmInventory'] = False
 
-                if i['CustomOperatingSystem'] == platform and i['CustomIsInSsmInventory'] == True:
+                if i['CustomOperatingSystem'] == platform and i['CustomIsInSsmInventory'] is True:
                     yield i
 
 
@@ -326,20 +405,23 @@ def paginate_iam_user(aws: dict, client: object, method: str) -> list:
             user = resource.User(r['UserName'])
 
             # Check Access Keys status
-            r['accesss_key_1'] = r['status_key_1'] = r['days_since_creation_key_1'] = r['last_used_key_1'] = None
-            r['accesss_key_2'] = r['status_key_2'] = r['days_since_creation_key_2'] = r['last_used_key_2'] = None
-            access_keys = list(paginate(client, 'list_access_keys', UserName=r['UserName']))
+            r['accesss_key_1'] = r['status_key_1'] = r['days_since_creation_key_1'] = r['last_used_key_1'] = None  # pylint: disable=line-too-long
+            r['accesss_key_2'] = r['status_key_2'] = r['days_since_creation_key_2'] = r['last_used_key_2'] = None  # pylint: disable=line-too-long
+            access_keys = list(
+                paginate(client, 'list_access_keys', UserName=r['UserName'])
+            )
             for k in access_keys:   # access_keys can have from none to 2 items
                 if access_keys.index(k) == 0:
-                    r['accesss_key_1'], r['status_key_1'], r['days_since_creation_key_1'], \
-                    r['last_used_key_1'] = get_access_key(k, client)
+                    r['accesss_key_1'], r['status_key_1'], r['days_since_creation_key_1'], r['last_used_key_1'] = get_access_key(k, client)  # pylint: disable=line-too-long
                 else:
-                    r['accesss_key_2'], r['status_key_2'], r['days_since_creation_key_2'], \
-                    r['last_used_key_2'] = get_access_key(k, client)
+                    r['accesss_key_2'], r['status_key_2'], r['days_since_creation_key_2'], r['last_used_key_2'] = get_access_key(k, client)  # pylint: disable=line-too-long
 
             # Grab User specific IAM Policies/Groups
             user_policies = get_iam_usr_policies(client, r['UserName'])
-            r['user_grp'], grp_policies = get_iam_usr_groups(client, r['UserName'])
+            r['user_grp'], grp_policies = get_iam_usr_groups(
+                client,
+                r['UserName']
+            )
             r['user_policies'] = user_policies + grp_policies
             r['Tags'] = get_user_tags(user)
 
@@ -353,9 +435,13 @@ def paginate_iam_sso_user(client: object, method: str, **kwargs) -> list:
     paginator = client.get_paginator(method)
     for page in paginator.paginate(**kwargs).result_key_iters():
         for user in page:
-            group_ids = list()
-            for group_id in paginate(client, 'list_group_memberships_for_member', IdentityStoreId=config.IDENTITY_STORE_ID, MemberId={'UserId': user['UserId']}):
-                sso_group = get_dic_item(sso_groups, 'GroupId', group_id['GroupId'])
+            group_ids = []
+            for group_id in paginate(client, 'list_group_memberships_for_member', IdentityStoreId=config.IDENTITY_STORE_ID, MemberId={'UserId': user['UserId']}):  # pylint: disable=line-too-long
+                sso_group = get_dic_item(
+                    sso_groups,
+                    'GroupId',
+                    group_id['GroupId']
+                )
                 group_ids.append(sso_group['DisplayName'])
 
             user['CustomGroupIds'] = group_ids
@@ -375,8 +461,11 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, method: str)
             InstanceArn=config.SSO_INSTANCE_ARN,
             AccountId=a['AccountId']
         )
-
-        id_store = b3_client(aws['AccountId'], 'identitystore', region=aws['Region'])
+        id_store = b3_client(
+            aws['AccountId'],
+            'identitystore',
+            region=aws['Region']
+        )
 
         for p in permission_sets:
             response = paginate(

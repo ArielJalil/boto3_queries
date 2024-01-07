@@ -1,1 +1,2 @@
-"""Directory of classes."""
+# -*- coding: utf-8 -*-
+"""Classes code directory."""
