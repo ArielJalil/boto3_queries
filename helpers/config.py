@@ -31,10 +31,10 @@ SESSION = _session_obj.cli()
 USER = os.getenv('USER')
 
 # Path to drop off all query output files
-CSV_PATH = 'queries/'
+CSV_PATH = 'query_results/'
 # CSV_PATH = '/tmp/'
 
 # If you run the script on WSL and Windows user and WSL user are the same.
 
 # CSV_PATH = f"/mnt/c/Users/{USER}/Downloads/"
-# CSV_PATH = f"/mnt/c/Users/{USER}/Khalil/Documents/C&I/boto3_queries/"
+# CSV_PATH = f"/mnt/c/Users/{USER}/Documents/query_results/"
