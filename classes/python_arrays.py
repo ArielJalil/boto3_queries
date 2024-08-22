@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Class to handle python arrays."""
 
+import sys
 from logging import getLogger
 from os import get_terminal_size
 from itertools import groupby
@@ -9,7 +10,8 @@ MODULE_LOGGER = getLogger(__name__)
 
 
 class ListToColumns:
-    """Display a list of items in a variable # of columns depending on the terminal width."""
+    """Display a list of items in a variable # of columns depending on the
+    terminal width."""
     _class_logger = MODULE_LOGGER.getChild(__qualname__)
 
     def __init__(self, items: list, col_width: int) -> None:
@@ -19,7 +21,7 @@ class ListToColumns:
         self.columns = int(ter_width / col_width)
         if self.columns == 0:
             self._instance_logger.error("Terminal is too small to display the output")
-            exit(-1)
+            sys.exit(-1)
 
         self.items = items
         self.lst_length = len(items)
@@ -62,7 +64,8 @@ class GetItemFrom:
         return [item[key] for item in self.items]
 
     def sorted_values_by_key(self, key: str) -> list:
-        """Generate a sorted list of values of an specific key from a list of dictionaries."""
+        """Generate a sorted list of values of an specific key from a list of
+        dictionaries."""
         return sorted([item[key] for item in self.items])
 
     def sorted_items(self, key: str) -> list:
@@ -70,8 +73,9 @@ class GetItemFrom:
         return sorted(self.items, key=lambda k: k[key])
 
     def grouped_items(self, group_by: str, sort_by: str) -> any:
-        """Generate a list of dictionaries grouped and sorted by specific keys."""
-        sorted_list = self.sorted_items(self.items, group_by)
+        """Generate a list of dictionaries grouped and sorted by specific
+        keys."""
+        sorted_list = self.sorted_items(self.items, group_by)  # pylint: disable=E1121
         for group_key, grouped_items in groupby(sorted_list, key=lambda k: k[group_by]):
             item_group = {
                 "grouped_by": group_key,

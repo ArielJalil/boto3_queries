@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """Generic classes to support queries."""
 
-# from sys import exit
+from logging import getLogger
 from datetime import datetime
 from dateutil.parser import parse
 
-from logging import getLogger
 LOGGER = getLogger(__name__)
 
 
-class Color:
+class Color:  # pylint: disable=R0902, R0903
     """Choose color to print messages."""
 
     def __init__(self) -> None:

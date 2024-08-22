@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """Class to handle AWS SDK for Python - Boto3."""
 
-from logging import getLogger
+import sys
 import os
+from logging import getLogger
 from boto3 import Session
 from botocore.credentials import JSONFileCache
 from botocore.exceptions import ProfileNotFound, SSOTokenLoadError, \
                                 ClientError, UnauthorizedSSOTokenError
-import helpers.config  as config
+from helpers import config
 
 MODULE_LOGGER = getLogger(__name__)
 
@@ -21,11 +22,13 @@ class AwsSession:
         self._instance_logger = self._class_logger.getChild(str(id(self)))
         self.profile = profile
         self.region = region
-        if authentication == 'sso' or authentication == 'cli':
+        if authentication == 'sso' or authentication == 'cli':  # pylint: disable=R1714
             self.authentication = authentication
         else:
-            self._instance_logger.error('Allowed values for authentication variable are sso or cli.')
-            exit(-1)
+            self._instance_logger.error(
+                'Allowed values for authentication variable are sso or cli.'
+            )
+            sys.exit(-1)
 
     def cli(self):
         """Start a session to be used from CLI."""
@@ -41,9 +44,9 @@ class AwsSession:
 
         except ProfileNotFound as e:
             self._instance_logger(e)
-            exit(-1)
+            sys.exit(-1)
 
-        cli_session._session.get_component(
+        cli_session._session.get_component(  # pylint: disable=W0212
             'credential_provider'
         ).get_provider(
             'assume-role'
@@ -57,14 +60,14 @@ class AwsSession:
         """Start a session to be used in a Lambda funcion."""
         try:
             session = Session(region_name=self.region)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             self._instance_logger.error(e)
-            exit(-1)
+            sys.exit(-1)
 
         return session
 
 
-class Paginator:
+class Paginator:  # pylint: disable=R0903
     """Boto3 generic paginator."""
     _class_logger = MODULE_LOGGER.getChild(__qualname__)
 
@@ -81,11 +84,11 @@ class Paginator:
 
         except KeyError as e:
             self._instance_logger.error(f"Paginator method not found: {e}")
-            exit(-1)
+            sys.exit(-1)
 
         except ClientError as e:
             self._instance_logger.error(f"Fail getting paginator: {e}")
-            exit(-1)
+            sys.exit(-1)
 
         try:
             for page in paginator.paginate(**kwargs).result_key_iters():
@@ -94,11 +97,11 @@ class Paginator:
 
         except UnboundLocalError as e:
             self._instance_logger.error(f"Paginator failure: {e}")
-            exit(-1)
+            sys.exit(-1)
 
         except ClientError as e:
             self._instance_logger.error(f"Paginator failure: {e}")
-            exit(-1)
+            sys.exit(-1)
 
 
 class BotoType:
@@ -114,24 +117,24 @@ class BotoType:
         """Set boto3 client."""
         try:
             return self.session.client(client)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             self._instance_logger.error(f"Boto3 client initialization failure: {e}")
-            exit(-1)
+            sys.exit(-1)
 
     def resource(self, resource: str) -> object:
         """Set boto3 resource."""
         try:
             return self.session.resource(resource)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             self._instance_logger.error(f"Boto3 resource initialization failure: {e}")
-            exit(-1)
+            sys.exit(-1)
 
 
 class Sts:
     """Assume role with STS for specified service."""
     _class_logger = MODULE_LOGGER.getChild(__qualname__)
 
-    def __init__(self, session: object, account_id: str, role:str, duration=900) -> object:
+    def __init__(self, session: object, account_id: str, role: str, duration=900) -> object:
         """Initialize class variables."""
         self._instance_logger = self._class_logger.getChild(str(id(self)))
         self.session = session
@@ -173,7 +176,7 @@ class Sts:
 
         return client
 
-    def get_resource(self, aws_service: str, region='ap-southeast-2') ->object:
+    def get_resource(self, aws_service: str, region='ap-southeast-2') -> object:
         """Set boto3 resource using STS token."""
         sts = self.assume_role()
         try:
@@ -210,7 +213,9 @@ class AwsPythonSdk:
         # Service IAM Role might not be deployed at the service account
         if self.account_id != self.service_account:
             # Set boto3 client using STS credentials
-            client = Sts(self.session, self.account_id, self.role).get_client(self.service, self.region)
+            client = Sts(
+                self.session, self.account_id, self.role
+            ).get_client(self.service, self.region)
         else:
             # The service account is already authenticated and it will use current user's IAM role
             client = self.session.client(self.service, self.region)
@@ -222,7 +227,9 @@ class AwsPythonSdk:
         # Service IAM Role might not be deployed at the service account
         if self.account_id != self.service_account:
             # Set boto3 resource using STS credentials
-            client = Sts(self.session, self.account_id, self.role).get_resource(self.service, self.region)
+            client = Sts(
+                self.session, self.account_id, self.role
+            ).get_resource(self.service, self.region)
         else:
             # The service account is already authenticated and it will use current user's IAM role
             client = self.session.resource(self.service, self.region)
@@ -236,14 +243,14 @@ class AwsPythonSdk:
         try:
             caller = sts.get_caller_identity()
         except UnauthorizedSSOTokenError as e:
-            self._instance_logger.error(f"Current user validation failed: {e}")
-            exit(-1)
+            self._instance_logger.error("Current user validation failed: %s", e)
+            sys.exit(-1)
         except SSOTokenLoadError as e:
-            self._instance_logger.error("Current user validation failed: {e}")
-            exit(-1)
+            self._instance_logger.error("Current user validation failed: %s", e)
+            sys.exit(-1)
         except ClientError as e:
-            self._instance_logger.error("Current user validation failed: {e}")
-            exit(-1)
+            self._instance_logger.error("Current user validation failed: %s", e)
+            sys.exit(-1)
 
         return caller
 
@@ -269,6 +276,4 @@ class AwsPythonSdk:
                     'AccountAlias': account['Name']
                 }
             else:
-                self._instance_logger.info(
-                   f"AWS Account {account['Name']} in status {account['Status']} was excluded."
-                )
+                self._instance_logger.info(f"AWS Account {account['Name']} in status {account['Status']} was excluded.")  # pylint: disable=C0301

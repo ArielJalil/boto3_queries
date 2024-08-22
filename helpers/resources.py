@@ -5,13 +5,13 @@ from logging import getLogger
 from classes.python_sdk import Paginator, AwsPythonSdk
 from classes.python_arrays import GetItemFrom
 from helpers import config, SETUP
-from helpers.boto3_func import get_permission_set_details, get_iam_usr_policies, get_user_tags, \
+from helpers.boto3_func import get_permission_set_details, get_permission_set_detail, \
+                               get_ec2_platform, get_dx_gw_attach, get_dhcp_config, get_volume, \
                                get_iam_usr_groups, get_arn_resources, get_operating_system, \
-                               get_user_location, get_routes, get_backup_enabled_resources, \
-                               get_patching_enabled_resources, get_volume, get_access_key, \
-                               get_ec2_sec_grps, get_tgw_att_subnets, s3_bucket_query,  \
-                               get_ec2_platform, get_dx_gw_attach, get_dhcp_config, \
-                               get_ec2_instance_profile, try_get_value
+                               get_patching_enabled_resources, get_access_key, get_routes, \
+                               get_ec2_sec_grps, get_tgw_att_subnets, s3_bucket_query, \
+                               get_user_location, get_backup_enabled_resources, get_user_tags, \
+                               get_ec2_instance_profile, try_get_value, get_iam_usr_policies
 
 LOGGER = getLogger(__name__)
 
@@ -397,8 +397,8 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, paginator: o
             )
             for mapping in response:
                 mapping['CustomAccountAlias'] = a['AccountAlias']
-                ps = list(get_permission_set_details(client, p))
-                mapping['CustomPermissionSetName'] = ps[0]['Name']  # Check this line
+                ps = get_permission_set_detail(client, p)
+                mapping['CustomPermissionSetName'] = ps['Name']
 
                 if mapping['PrincipalType'] == 'GROUP':
                     try:
