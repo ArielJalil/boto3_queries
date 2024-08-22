@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Class to handle CSV files."""
 
-import csv
-import os
 import logging
-
+import os
+import csv
 from datetime import datetime
 from helpers import config
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class CsvHandler:
         csv_headers += resource_csv_headers
 
         # Add tag keys as column names
-        csv_headers += config.MANDATORY_TAGS.keys()
+        csv_headers += config.TAG_KEYS
         csv_headers.append('CountMissedTag')
 
         self.writer(result, csv_headers)

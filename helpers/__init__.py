@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Helper modules."""
+"""Helpers functions module."""
 
 import logging
 from helpers import config
@@ -11,6 +11,7 @@ logging.basicConfig(
 )
 
 LOGGER = logging.getLogger(__name__)
+LOGGER.info("Initialize query settings.")
 
 # Setup for each query
 SETUP = {
@@ -29,6 +30,8 @@ SETUP = {
             'PublicIpAddress',
             'VpcId',
             'SubnetId',
+            'NetworkInterfaces',
+            'SecurityGroups',
             'Architecture',
             'VolumeCount',
             'VolumeSize',
@@ -39,13 +42,17 @@ SETUP = {
             'IsSsmAgentEnabled'
         ]
     },
-    'tag_editor': {
-        'Client': 'resourcegroupstaggingapi',
-        'Paginator': 'get_resources',
+    'fsx': {
+        'Client': 'fsx',
+        'Paginator': 'describe_file_systems',
         'Headers': [
-            'ArnService',
-            'ArnType',
-            'ArnId'
+            'FileSystemId',
+            'CreationTime',
+            'DaysSince:CreationTime',
+            'FileSystemType',
+            'StorageCapacity',
+            'StorageType',
+            'WindowsConfiguration:ActiveDirectoryId'
         ]
     },
     'ami': {
@@ -61,6 +68,138 @@ SETUP = {
             'PlatformDetails'
         ]
     },
+    'ebs_volume': {
+        'Client': 'ec2',
+        'Paginator': 'describe_volumes',
+        'Headers': [
+            'VolumeId',
+            'State',
+            'Size'
+        ]
+    },
+    'ebs_volume_snap': {
+        'Client': 'ec2',
+        'Paginator': "describe_snapshots",
+        'Headers': [
+            'SnapshotId',
+            'Description',
+            'VolumeId',
+            'VolumeSize',
+            'StartTime',
+            'DaysSince:StartTime'
+        ]
+    },
+    'eni': {
+        'Client': 'ec2',
+        'Paginator': "describe_network_interfaces",
+        'Headers': [
+            'Association:AssociationId',
+            'Association:PublicIp',
+            'Association:PublicDnsName',
+            'Attachment:AttachmentId',
+            'Attachment:InstanceId',
+            'Attachment:Status',
+            'AvailabilityZone',
+            'InterfaceType',
+            'Description',
+            'NetworkInterfaceId',
+            'PrivateDnsName',
+            'PrivateIpAddress',
+            'Status',
+            'SubnetId',
+            'VpcId'
+        ]
+    },
+    'ssm_inventory': {
+        'Client': 'ssm',
+        'Paginator': 'describe_instance_information',
+        'Headers': [
+            'InstanceId',
+            'Name',
+            'ComputerName',
+            'PlatformName',
+            'PlatformVersion',
+            'AssociationStatus'
+        ]
+    },
+    'ssm_patching': {
+        'Client': 'ssm',
+        'Paginator': 'describe_instance_patch_states_for_patch_group',
+        'Headers': [
+            'InstanceId',
+            'PatchGroup',
+            'CustomName',
+            'CustomComputerName',
+            'CustomOperatingSystem',
+            'CustomPlatformVersion',
+            'OperationStartTime',
+            'OperationEndTime',
+            'DaysSince:OperationEndTime'
+        ]
+    },
+    'elb': {
+        'Client': 'elb',
+        'Paginator': 'describe_load_balancers',
+        'Headers': [
+            'LoadBalancerName',
+            'DNSName',
+            'Scheme',
+            'VPCId',
+            'CustomInstances'
+        ]
+    },
+    'elb_v2': {
+        'Client': 'elbv2',
+        'Paginator': 'describe_load_balancers',
+        'Headers': [
+            'LoadBalancerName',
+            'DNSName',
+            'Scheme',
+            'Type',
+            'CustomTargetGroups',
+            'CustomTargets'
+        ]
+    },
+    's3_bucket': {
+        'Client': 's3',
+        'Region': [config.REGION],
+        'Paginator': None,
+        'Method': 'list_buckets',
+        'ResponseItem': 'Buckets',
+        'Headers': [
+            'Name',
+            'DaysSince:CreationDate',
+            'CreationDate',
+            'CustomSizeGB',
+            'CustomObjectCount'
+        ]
+    },
+    'rds': {
+        'Client': 'rds',
+        'Paginator': 'describe_db_instances',
+        'Headers': [
+            'DBInstanceIdentifier',
+            'DBClusterIdentifier',
+            'DBName',
+            'MasterUsername',
+            'DBInstanceStatus',
+            'DBInstanceClass',
+            'AllocatedStorage',
+            'Engine',
+            'EngineVersion',
+            'MultiAZ',
+            'BackupRetentionPeriod',
+            'InstanceCreateTime',
+            'DaysSince:InstanceCreateTime'
+        ]
+    },
+    'dynamodb': {
+        'Client': 'dynamodb',
+        'Paginator': 'list_tables',
+        'Headers': [
+            'CustomTableName'
+        ]
+    },
     'vpc': {
         'Client': 'ec2',
         'Paginator': 'describe_vpcs',
@@ -68,6 +207,7 @@ SETUP = {
             'VpcId',
             'OwnerId',
             'CidrBlock',
+            'CustomCidrBlocks',
             'DhcpOptionsId',
             'IsDefault'
         ]
@@ -163,6 +303,7 @@ SETUP = {
             'TransitGatewayAttachmentId',
             'State',
             'Association:State',
+            'TransitGatewayId',
             'Association:TransitGatewayRouteTableId',
             'ResourceOwnerId',
             'ResourceType',
@@ -191,27 +332,6 @@ SETUP = {
             'SubnetId'
         ]
     },
-    'ebs_volume': {
-        'Client': 'ec2',
-        'Paginator': 'describe_volumes',
-        'Headers': [
-            'VolumeId',
-            'State',
-            'Size'
-        ]
-    },
-    'ebs_volume_snap': {
-        'Client': 'ec2',
-        'Paginator': "describe_snapshots",
-        'Headers': [
-            'SnapshotId',
-            'Description',
-            'VolumeId',
-            'VolumeSize',
-            'StartTime',
-            'DaysSince:StartTime'
-        ]
-    },
     'route_table': {
         'Client': 'ec2',
         'Paginator': 'describe_route_tables',
@@ -226,173 +346,6 @@ SETUP = {
             'CustomRoutes'
         ]
     },
-    'aws_backup': {
-        'Client': 'backup',
-        'Paginator': 'list_protected_resources',
-        'Headers': [
-            'ResourceType',
-            'ArnId',
-            'ResourceName',
-            'LastBackupTime',
-            'DaysSince:LastBackupTime'
-        ]
-    },
-    'r53_hosted_zones': {
-        'Client': 'route53',
-        'Paginator': 'list_hosted_zones',
-        'Headers': [
-            'Id',
-            'Name',
-            'Config:Comment',
-            'Config:PrivateZone',
-            'ResourceRecordSetCount'
-        ]
-    },
-    'ssm_inventory': {
-        'Client': 'ssm',
-        'Paginator': 'describe_instance_information',
-        'Headers': [
-            'InstanceId',
-            'Name',
-            'ComputerName',
-            'PlatformName',
-            'PlatformVersion',
-            'AssociationStatus'
-        ]
-    },
-    'ssm_patching': {
-        'Client': 'ssm',
-        'Paginator': 'describe_instance_patch_states_for_patch_group',
-        'Headers': [
-            'InstanceId',
-            'PatchGroup',
-            'CustomName',
-            'CustomComputerName',
-            'CustomOperatingSystem',
-            'CustomPlatformVersion',
-            'OperationStartTime',
-            'OperationEndTime',
-            'DaysSince:OperationEndTime'
-        ]
-    },
-    'aws_config': {
-        'Client': 'config',
-        'Paginator': 'list_discovered_resources',
-        'Headers': [
-            'resourceType',
-            'resourceId',
-            'resourceName'
-        ]
-    },
-    'iam_user': {
-        'Client': 'iam',
-        'Region': [config.REGION],
-        'Paginator': 'list_users',
-        'Headers': [
-            'UserName',
-            'PasswordLastUsed',
-            'DaysSince:PasswordLastUsed',
-            'accesss_key_1',
-            'status_key_1',
-            'days_since_creation_key_1',
-            'last_used_key_1',
-            'accesss_key_2',
-            'status_key_2',
-            'days_since_creation_key_2',
-            'last_used_key_2',
-            'user_grp',
-            'user_policies'
-        ]
-    },
-    'iam_sso_user': {                           # Only works in root account
-        'Client': 'identitystore',
-        'Region': [config.REGION],
-        'Paginator': 'list_users',
-        'Headers': [
-            'UserName',
-            'UserId',
-            'CustomGroupIds',
-            'DisplayName',
-            'Title',
-            'CustomLocation'
-        ]
-    },
-    'iam_sso_group': {                     # It doesn't work in root account
-        'Client': 'identitystore',
-        'Region': [config.REGION],
-        'Paginator': 'list_groups',
-        'Headers': [
-            'GroupId',
-            'DisplayName',
-            'Description'
-        ]
-    },
-    'iam_sso_permission_sets': {                # Only works in root account
-        'Client': 'sso-admin',
-        'Region': [config.REGION],
-        'Paginator': 'list_permission_sets',
-        'Headers': [
-            'Name',
-            'Description',
-            'SessionDuration',
-            'PermissionSetArn'
-        ]
-    },
-    'iam_sso_account_assignments': {            # Only works in root account
-        'Client': 'sso-admin',
-        'Region': [config.REGION],
-        'Paginator': 'list_account_assignments',
-        'Headers': [
-            'AccountId',
-            'CustomAccountAlias',
-            'PermissionSetArn',
-            'CustomPermissionSetName',
-            'PrincipalType',
-            'PrincipalId',
-            'CustomPrincipalName'
-        ]
-    },
-    'health': {
-        'Client': 'health',
-        'Region': [config.REGION],
-        'Paginator': 'describe_events',
-        'Headers': [
-            'arn',
-            'service',
-            'eventTypeCode',
-            'eventTypeCategory',
-            'region',
-            'startTime',
-            'endTime',
-            'lastUpdatedTime',
-            'statusCode',
-            'eventScopeCode',
-            'CustomEntityValue'
-        ]
-    },
-    's3_bucket': {
-        'Client': 's3',
-        'Region': [config.REGION],
-        'Paginator': None,
-        'Method': 'list_buckets',
-        'ResponseItem': 'Buckets',
-        'Headers': [
-            'Name',
-            'DaysSince:CreationDate',
-            'CreationDate'
-        ]
-    },
-    'ram': {
-        'Client': 'ram',
-        'Paginator': None,
-        'Method': 'list_resources',
-        'ResponseItem': 'resources',
-        'Headers': [
-            'ArnService',
-            'ArnType',
-            'ArnId'
-        ]
-    },
     'vpn': {
         'Client': 'ec2',
         'Paginator': None,
@@ -405,6 +358,49 @@ SETUP = {
             'TransitGatewayId',
             'CustomerGatewayId',
             'GatewayAssociationState'
+        ]
+    },
+    'dx_connections': {
+        'Client': 'directconnect',
+        'Paginator': None,
+        'Method': 'describe_connections',
+        'ResponseItem': 'connections',
+        'Headers': [
+            'ownerAccount',
+            'connectionId',
+            'connectionName',
+            'connectionState',
+            'bandwidth',
+            'location',
+            'partnerName',
+            'providerName'
+        ]
+    },
+    'dx_gateway': {
+        'Client': 'directconnect',
+        'Paginator': None,
+        'Method': 'describe_direct_connect_gateways',
+        'ResponseItem': 'directConnectGateways',
+        'Headers': [
+            'directConnectGatewayId',
+            'directConnectGatewayName',
+            'amazonSideAsn',
+            'ownerAccount',
+            'directConnectGatewayState'
+        ]
+    },
+    'dx_gateway_attach': {
+        'Client': 'directconnect',
+        'Paginator': None,
+        'Method': 'describe_direct_connect_gateway_attachments',
+        'ResponseItem': 'directConnectGatewayAttachments',
+        'Headers': [
+            'directConnectGatewayId',
+            'virtualInterfaceId',
+            'virtualInterfaceRegion',
+            'virtualInterfaceOwnerAccount',
+            'attachmentState',
+            'attachmentType'
         ]
     },
     'dx_vgw': {
@@ -430,6 +426,194 @@ SETUP = {
             'vlan',
             'region',
             'ownerAccount'
+        ]
+    },
+    'r53_hosted_zones': {
+        'Client': 'route53',
+        'Paginator': 'list_hosted_zones',
+        'Headers': [
+            'Id',
+            'Name',
+            'Config:Comment',
+            'Config:PrivateZone',
+            'ResourceRecordSetCount'
+        ]
+    },
+    'cfn_stack': {
+        'Client': 'cloudformation',
+        'Paginator': 'list_stacks',
+        'Headers': [
+            'StackId',
+            'StackName',
+            'TemplateDescription',
+            'CreationTime',
+            'LastUpdatedTime',
+            'StackStatus',
+            'DriftInformation:StackDriftStatus'
+        ]
+    },
+    'cfn_stack_set': {
+        'Client': 'cloudformation',
+        'Paginator': 'list_stack_sets',
+        'Headers': [
+            'StackSetId',
+            'StackSetName',
+            'Description',
+            'Status',
+            'DriftStatus',
+            'PermissionModel'
+        ]
+    },
+    'aws_config': {
+        'Client': 'config',
+        'Paginator': 'list_discovered_resources',
+        'Headers': [
+            'resourceType',
+            'resourceId',
+            'resourceName'
+        ]
+    },
+    'tag_editor': {
+        'Client': 'resourcegroupstaggingapi',
+        'Paginator': 'get_resources',
+        'Headers': [
+            'ArnService',
+            'ArnType',
+            'ArnId'
+        ]
+    },
+    'aws_backup': {
+        'Client': 'backup',
+        'Paginator': 'list_protected_resources',
+        'Headers': [
+            'ResourceType',
+            'ArnId',
+            'ResourceName',
+            'LastBackupTime',
+            'DaysSince:LastBackupTime'
+        ]
+    },
+    'storage_gw': {
+        'Client': 'storagegateway',
+        'Paginator': 'list_gateways',
+        'Headers': [
+            'GatewayId',
+            'GatewayName',
+            'GatewayType',
+            'Ec2InstanceId',
+            'HostEnvironment',
+            'HostEnvironmentId'
+        ]
+    },
+    'health': {
+        'Client': 'health',
+        'Region': ['us-east-1'],
+        'Paginator': 'describe_events',
+        'Headers': [
+            'arn',
+            'service',
+            'eventTypeCode',
+            'eventTypeCategory',
+            'region',
+            'startTime',
+            'endTime',
+            'lastUpdatedTime',
+            'statusCode',
+            'eventScopeCode',
+            'CustomEntityValue'
+        ]
+    },
+    'ram': {
+        'Client': 'ram',
+        'Paginator': None,
+        'Method': 'list_resources',
+        'ResponseItem': 'resources',
+        'Headers': [
+            'ArnService',
+            'ArnType',
+            'ArnId'
+        ]
+    },
+    'iam_user': {
+        'Client': 'iam',
+        'Region': [config.REGION],
+        'Paginator': 'list_users',
+        'Headers': [
+            'UserName',
+            'PasswordLastUsed',
+            'DaysSince:PasswordLastUsed',
+            'accesss_key_1',
+            'status_key_1',
+            'days_since_creation_key_1',
+            'last_used_key_1',
+            'accesss_key_2',
+            'status_key_2',
+            'days_since_creation_key_2',
+            'last_used_key_2',
+            'user_grp',
+            'user_policies'
+        ]
+    },
+    'iam_roles': {
+        'Client': 'iam',
+        'Region': [config.REGION],
+        'Paginator': 'list_roles',
+        'Headers': [
+            'RoleName',
+            'Description',
+            'Arn',
+            'MaxSessionDuration',
+            'CreateDate',
+            'DaysSince:CreateDate'
+        ]
+    },
+    'iam_sso_user': {                           # Only works in org root account
+        'Client': 'identitystore',
+        'Region': [config.REGION],
+        'Paginator': 'list_users',
+        'Headers': [
+            'UserName',
+            'UserId',
+            'CustomGroupIds',
+            'DisplayName',
+            'Title',
+            'CustomLocation'
+        ]
+    },
+    'iam_sso_account_assignments': {            # Only works in org root account
+        'Client': 'sso-admin',
+        'Region': [config.REGION],
+        'Paginator': 'list_account_assignments',
+        'Headers': [
+            'AccountId',
+            'CustomAccountAlias',
+            'PermissionSetArn',
+            'CustomPermissionSetName',
+            'PrincipalType',
+            'PrincipalId',
+            'CustomPrincipalName'
+        ]
+    },
+    'iam_sso_group': {
+        'Client': 'identitystore',
+        'Region': [config.REGION],
+        'Paginator': 'list_groups',
+        'Headers': [
+            'GroupId',
+            'DisplayName',
+            'Description',
+            'CustomMembers'
+        ]
+    },
+    'iam_sso_permission_sets': {
+        'Client': 'sso-admin',
+        'Region': [config.REGION],
+        'Paginator': 'list_permission_sets',
+        'Headers': [
+            'Name',
+            'Description',
+            'SessionDuration',
+            'PermissionSetArn'
         ]
     }
 }

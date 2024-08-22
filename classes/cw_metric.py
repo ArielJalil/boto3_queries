@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Class to handle CloudWatch Metrics."""
 
-from datetime import datetime, timedelta
 from logging import getLogger
+from datetime import datetime, timedelta
 
 LOGGER = getLogger(__name__)
 
@@ -31,7 +31,7 @@ class CwMetric:
                 'Value': result["Datapoints"][0][statistic],
                 'Unit': result['Datapoints'][0]['Unit']
             }
-        except:  # pylint: disable=bare-except
+        except:  # pylint: disable=W0702
             return {
                 'Value': 0,
                 'Unit': None

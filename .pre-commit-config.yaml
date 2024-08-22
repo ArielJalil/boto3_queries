@@ -44,7 +44,7 @@ repos:
       types: [python]
       args:
         - --max-line-length=100        # Matching with PyLint default line length
-        - --ignore=E126, E501, E722    # line-over-indented, line-too-long, bare-except
+        - --ignore=E126, E501, E722, E122    # line-over-indented, line-too-long, bare-except, continuation line missing indentation or outdented
 - repo: https://github.com/PyCQA/pylint
   rev: v3.0.3
   hooks:

@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Class to handle ARN values individualy.
+"""Class to handle ARN values individually.
 
-ARN formats:
+ARN format:
 
 arn:partition:service:region:account-id:resource-id
 arn:partition:service:region:account-id:resource-type/resource-id
 arn:partition:service:region:account-id:resource-type:resource-id
 """
+
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ArnHandler:
@@ -68,6 +72,15 @@ class ArnHandler:
 
         return resource_id
 
+    def resource_version(self) -> str:
+        """Get ARN resource version."""
+        if len(self.arn_splited) == 8:
+            resource_version = self.arn_splited[7]
+        else:
+            resource_version = None
+
+        return resource_version
+
     def details(self) -> None:
         """Display ARN and all columns explained."""
         print(f"\nARN..........: {self.arn}\n")
@@ -77,10 +90,11 @@ class ArnHandler:
         print(f"Account ID...: {self.account()}")
         print(f"Resource type: {self.resource_type()}")
         print(f"Resource ID..: {self.resource_id()}")
+        print(f"Resource Ver.: {self.resource_version()}")
 
 
 def usage_example():
-    """Example code for the class."""
+    """How to use the class."""
     arn = "arn:partition:service:region:account-id:resource-type/resource-id"
     arn_obj = ArnHandler(arn)
     arn_obj.details()

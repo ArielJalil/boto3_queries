@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """Class to handle resource tags."""
 
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
 
 def _curated_str(string: str) -> str:
     """Remove CSV file conflictive characters from string."""
@@ -38,7 +42,7 @@ class Tag:
             tags_of_interest = {}
             tag_dict = self.get_all_tags_curated()
             for k in default_tags.keys():
-                if k in tag_dict.keys():  # pylint: disable=consider-iterating-dictionary
+                if k in tag_dict.keys():  # pylint: disable=C0201
                     tags_of_interest[k] = _curated_str(tag_dict[k])
                 else:
                     tags_of_interest[k] = "NoValue"

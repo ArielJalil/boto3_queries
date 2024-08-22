@@ -1,26 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Class to construct boto3 session with MFA cache."""
+"""Class to set boto3 session with MFA cache."""
 
 import os
 import sys
 import logging
-import botocore  # pylint: disable=import-error
-import boto3     # pylint: disable=import-error
+from boto3 import Session
+from botocore.credentials import JSONFileCache
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger("boto_session")
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter(
-    "%(asctime)s;%(levelname)s;%(message)s", "%m/%d/%Y %I:%M:%S %p"
-)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 
 
 def display_exception(msg):
-    """Show excepion messages and abort."""
-    logger(f"ERROR | Boto3 session failed with error message below:\n {msg}")
+    """Show exception messages and abort."""
+    logger.error("ERROR | Boto3 session failed with error message below:\n %s", msg)
     sys.exit(1)
 
 
@@ -32,27 +26,30 @@ class AwsSession:
         self.profile = profile
         self.region = region
 
-    def cli(self) -> object:
+    def cli(self, auth='sso') -> object:
         """Start a session to be used from CLI and check if the credentials are
         cached already."""
-        # it should be replaced to .aws/cli/cache when using Access Keys
-        cli_cache = os.path.join(os.path.expanduser('~'), '.aws/sso/cache')
+        # aws cli cache location per authentication method
+        if auth == 'sso':
+            cache = '.aws/sso/cache'
+        else:
+            cache = '.aws/cli/cache'
+
+        cli_cache = os.path.join(os.path.expanduser('~'), cache)
+
         try:
-            session = boto3.Session(profile_name=self.profile,
-                                    region_name=self.region)
-
-        except botocore.exceptions.ProfileNotFound as error:
+            session = Session(profile_name=self.profile, region_name=self.region)
+        except ClientError as error:
             display_exception(error)
-
         except Exception as error:  # pylint: disable=broad-except
             display_exception(error)
 
         try:
             session._session.get_component(  # pylint: disable=protected-access
                 'credential_provider'
-            ).get_provider(
-                'assume-role'
-            ).cache = botocore.credentials.JSONFileCache(cli_cache)
+            ).get_provider('assume-role').cache = JSONFileCache(cli_cache)
+        except ClientError as error:
+            display_exception(error)
         except Exception as error:  # pylint: disable=broad-except
             display_exception(error)
 
@@ -61,7 +58,7 @@ class AwsSession:
     def lambdas(self) -> object:
         """Start a session to be used in a Lambda funcion."""
         try:
-            session = boto3.Session(region_name=self.region)
+            session = Session(region_name=self.region)
         except Exception as error:  # pylint: disable=broad-except
             display_exception(error)
 

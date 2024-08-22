@@ -2,41 +2,31 @@
 """Run AWS resource queries across an AWS Organization.
 
 Usage example:
-Query VPCs at all AWS accounts in the organization within all available regions
+Query VPCs at all AWS accounts in the organization within all available regions:
 
 > python3 boto3_query.py -n vpc
 """
 
+from logging import getLogger
 from re import match
-import click  # pylint: disable=import-error
+import click
+
+from helpers import config
+from helpers import SETUP
+from helpers.resources import get_resources
+from helpers.boto3_func import accounts_to_query, regions_to_query, add_region, \
+                               try_get_value, get_resource_tags
 
 from classes.csv_file import CsvHandler
-from helpers import config
+from classes.python_sdk import AwsSession, AwsPythonSdk
+from classes.looper import Looper
 
-from helpers import LOGGER, SETUP
-from helpers.resources import get_resources
-from helpers.boto3_func import regions_to_query, add_region, loop_function, \
-                               try_get_value, get_resource_tags, \
-                               validate_sts_token, accounts_to_query
+LOGGER = getLogger(__name__)
 
 
-def query_by_account(aws: dict) -> list:
-    """Trigger a query at each active region by AWS account in parallel."""
-
-    try:     # Check if the query is multi-region or not
-        regions = SETUP[config.QUERY]['Region']
-    except:  # pylint: disable=bare-except
-        regions = regions_to_query(config.REGION, aws['AccountId'])
-
-    # Generate a list with required region/s for the query
-    query_region = add_region(aws, regions)
-
-    return loop_function(query_region, resources, False)
-
-
-def resources(aws: dict) -> list:
+def resources_by_region(aws: dict) -> list:
     """Run query with an AWS account and region."""
-    csv_rows = []   # Initialize rows list
+    csv_rows = []  # Initialize rows list
 
     # Loop through aws resources
     for r in get_resources(aws, config.QUERY):
@@ -56,12 +46,29 @@ def resources(aws: dict) -> list:
     return csv_rows
 
 
-def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argument
-    """Validate AWS Account ID is 12 integer digits."""
-    if not match('\d{12}', value):  # pylint: disable=anomalous-backslash-in-string # noqa: W605
-        raise click.BadParameter('AWS account ID must be 12 digits.')
+def query_by_account(aws: dict) -> list:
+    """Trigger a query at each active region by AWS account in parallel or to a
+    single AWS region if it is specified as an argument."""
 
-    return value
+    # If Region is not declared in the SETUP variable it means the query
+    # is multi-region
+    try:
+        regions = SETUP[config.QUERY]['Region']
+    except:  # pylint: disable=W0702
+        regions = regions_to_query(config.REGION, aws['AccountId'])
+
+    # Generate a list with required region/s for the query
+    aws_regions = add_region(aws, regions)
+
+    return Looper(aws_regions, resources_by_region).parallel_return()
+
+
+def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
+    """Validate AWS Account ID is valid."""
+    if match(r'\d{12}', value) and len(value) == 12:
+        return value
+
+    raise click.BadParameter('AWS account ID must be 12 digits.')
 
 
 @click.command()
@@ -87,7 +94,7 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argume
 @click.option(
     '-r',
     '--region',
-    default=None,
+    default=config.REGION,
     show_default=True,
     nargs=1,
     help='AWS Region'
@@ -95,25 +102,24 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=unused-argume
 def run_query(name: str, account: str, region: str) -> None:
     """Run an AWS resource query by service name."""
 
-    # Check if the user running the query is authenticated.
-    caller = validate_sts_token()
-    LOGGER.info("Query started by %s", caller['Arn'])
-
-    # Set query paramenters to share the value across modules
+    # Set query parameters to share the values across modules
     config.QUERY = name
     config.REGION = region
+    config.SESSION = AwsSession(config.CLI_PROFILE, region, authentication="sso").cli()
+
+    # Check if the user running the query is authenticated.
+    caller = AwsPythonSdk(config.SERVICE_ACCOUNT_ID, 'sts').validate_sts_token()
+    LOGGER.info("Query started by %s", caller['Arn'])
 
     # Loop through all accounts/regions to run an AWS SDK query in parallel
-    results = loop_function(
-        accounts_to_query(account),  # List of AWS account/s to run a query on
-        query_by_account,            # Query to run per account in paralallel
-        True                         # Flag to display result summary
-    )
+    results = Looper(
+        accounts_to_query(account),  # List of AWS account/s to run a query
+        query_by_account,            # Function to run per account in parallel
+    ).parallel_return(summary=True)
 
-    # Send the results to a csv file locally
-    csv_file = CsvHandler(f"{config.CSV_PATH}{name}")
-    csv_file.query_to_csv(SETUP[name]['Headers'], results)
+    # Send the results to a csv file
+    CsvHandler(f"{config.CSV_PATH}{name}").query_to_csv(SETUP[name]['Headers'], results)
 
 
 if __name__ == '__main__':
-    run_query()  # pylint: disable=no-value-for-parameter
+    run_query()  # pylint: disable=E1120
