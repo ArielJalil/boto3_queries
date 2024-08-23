@@ -7,6 +7,9 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 * boto3
 * botocore
 * click
+* python-dateutil
+
+**Note:** Check the `requirements.txt` file in case you have some package version issue.
 
 ## Pre-requisite
 
