@@ -31,14 +31,14 @@ class Color:  # pylint: disable=R0902, R0903
 
 
 class ByteTo:
-    """Transform bytes in to kb mb gb an so on."""
+    """Transform bytes to kb mb gb an so on."""
 
     def __init__(self, byte) -> None:
         """Class constructor."""
         self.byte = byte
 
     def kilo(self):
-        """Transform to MB."""
+        """Transform to KB."""
         return self.byte / 1024
 
     def mega(self):
@@ -46,27 +46,27 @@ class ByteTo:
         return self.byte / 1024 ** 2
 
     def giga(self):
-        """Transform to MB."""
+        """Transform to GB."""
         return self.byte / 1024 ** 3
 
     def tera(self):
-        """Transform to MB."""
+        """Transform to TB."""
         return self.byte / 1024 ** 4
 
     def peta(self):
-        """Transform to MB."""
+        """Transform to PB."""
         return self.byte / 1024 ** 5
 
     def exa(self):
-        """Transform to MB."""
+        """Transform to EB."""
         return self.byte / 1024 ** 6
 
     def zetta(self):
-        """Transform to MB."""
+        """Transform to ZB."""
         return self.byte / 1024 ** 7
 
     def yotta(self):
-        """Transform to MB."""
+        """Transform to YB."""
         return self.byte / 1024 ** 8
 
 

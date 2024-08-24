@@ -52,7 +52,7 @@ TAG_KEYS = [
     # 'aws:secretsmanager:owningService',
     # 'aws:ssmmessages:session-id',
     # 'aws:ssmmessages:target-id',
-]                  # Change the tags as per your organization needs
+]                                             # Change the tags as per your organization needs
 
 MANDATORY_TAGS = {}
 for key in TAG_KEYS:

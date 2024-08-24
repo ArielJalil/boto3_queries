@@ -54,7 +54,7 @@ def query_by_account(aws: dict) -> list:
     # is multi-region
     try:
         regions = SETUP[config.QUERY]['Region']
-    except:  # pylint: disable=W0702
+    except KeyError:
         regions = regions_to_query(config.REGION, aws['AccountId'])
 
     # Generate a list with required region/s for the query

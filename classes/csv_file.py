@@ -7,7 +7,6 @@ import csv
 from datetime import datetime
 from helpers import config
 
-
 LOGGER = logging.getLogger(__name__)
 
 

@@ -56,7 +56,7 @@ def get_resource_tags(resource: str) -> list:
     """Get list of default tag values if exist and count missing tags."""
     try:
         r_tag = Tag(resource['Tags']).values(config.MANDATORY_TAGS)
-    except:  # pylint: disable=W0702
+    except KeyError:
         r_tag = list(config.MANDATORY_TAGS.values())
         r_tag.append(len(config.TAG_KEYS))
 
@@ -75,7 +75,7 @@ def try_get_value(dictionary: dict, key: str) -> str:
     if ":" not in key:
         try:
             value = dictionary[key]
-        except:  # pylint: disable=W0702
+        except KeyError:
             value = 'HeaderNotFound'
     else:
         r = ''
@@ -96,7 +96,7 @@ def try_get_value(dictionary: dict, key: str) -> str:
 
             try:
                 value = literal_eval(f"dictionary{r}")
-            except:  # pylint: disable=W0702
+            except KeyError:
                 value = 'HeaderNotFound'
 
     return value
@@ -106,7 +106,7 @@ def get_ec2_platform(dictionary: dict, key: str) -> str:
     """Check if ec2 platform is Windows or Linux."""
     try:
         platform = dictionary[key]
-    except:  # pylint: disable=W0702
+    except KeyError:
         platform = 'Linux'
 
     return platform
@@ -169,7 +169,7 @@ def get_ec2_instance_profile(dictionary: dict, key: str) -> str:
     try:
         instance_profile = dictionary[key]
         instance_profile_arn = instance_profile['Arn']
-    except:  # pylint: disable=W0702
+    except KeyError:
         instance_profile_arn = 'NoValue'
 
     return instance_profile_arn
@@ -233,7 +233,7 @@ def get_user_location(user: dict) -> str:
     """Get SSO user location."""
     try:
         return user['Addresses'][0]['Formatted']
-    except:  # pylint: disable=W0702
+    except KeyError:
         return ''
 
 

@@ -41,8 +41,8 @@ class Tag:
         if self.tags:
             tags_of_interest = {}
             tag_dict = self.get_all_tags_curated()
-            for k in default_tags.keys():
-                if k in tag_dict.keys():  # pylint: disable=C0201
+            for k in default_tags:
+                if k in tag_dict:
                     tags_of_interest[k] = _curated_str(tag_dict[k])
                 else:
                     tags_of_interest[k] = "NoValue"

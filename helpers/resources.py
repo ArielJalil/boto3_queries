@@ -293,7 +293,7 @@ def paginate_route_table(paginator: object) -> any:
         if propagative_vgw != 'NoValue':
             try:
                 propagative_vgw_id = propagative_vgw[0]['GatewayId']
-            except:  # pylint: disable=W0702
+            except KeyError:
                 propagative_vgw_id = ''
 
         # List subnet/gateway associated with the route table
@@ -407,7 +407,7 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, paginator: o
                             GroupId=mapping['PrincipalId']
                         )
                         mapping['CustomPrincipalName'] = grp['DisplayName']
-                    except:  # pylint: disable=W0702
+                    except KeyError:
                         mapping['CustomPrincipalName'] = "Group not found"
                 else:
                     try:
@@ -417,7 +417,7 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, paginator: o
                         )
                         mapping['CustomPrincipalName'] = usr['UserName']
 
-                    except:  # pylint: disable=W0702
+                    except KeyError:
                         mapping['CustomPrincipalName'] = 'User not found'
 
                 yield mapping

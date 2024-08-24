@@ -27,15 +27,17 @@ class CwMetric:
             Statistics=[statistic],
         )
         try:
-            return {
+            metrics = {
                 'Value': result["Datapoints"][0][statistic],
                 'Unit': result['Datapoints'][0]['Unit']
             }
         except:  # pylint: disable=W0702
-            return {
+            metrics = {
                 'Value': 0,
                 'Unit': None
             }
+
+        return metrics
 
     def get_bucket_size(self, bucket: str) -> dict:
         """Query S3 bucket Standard Storage usage."""
