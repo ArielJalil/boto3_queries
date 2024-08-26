@@ -2,7 +2,6 @@
 """General useful functions to support boto3 api calls."""
 
 import sys
-from ast import literal_eval
 from logging import getLogger
 from helpers import SETUP, config
 from classes.python_sdk import Paginator, AwsPythonSdk
@@ -95,7 +94,7 @@ def try_get_value(dictionary: dict, key: str) -> str:
                 r += "['" + k + "']"
 
             try:
-                value = literal_eval(f"dictionary{r}")
+                value = eval(f"dictionary{r}")  # nosec: B307
             except KeyError:
                 value = 'HeaderNotFound'
 

@@ -9,4 +9,9 @@
 # can either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
-disable=E0401
+disable=E0401,W0123
+
+# Exclusion descriptions
+#
+# E0401: Used when pylint has been unable to import a module.
+# W0123: Use of eval (eval-used).
