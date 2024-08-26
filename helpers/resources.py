@@ -229,11 +229,13 @@ def paginate_rds(paginator: object) -> any:
 def paginate_dynamodb(aws: dict, client: object, paginator: object) -> any:
     """Paginate rds instances and change tag key name."""
     for r in paginator:
-        r['CustomTableName'] = r
-        r['Tags'] = client.list_tags_of_resource(
-            ResourceArn=f"arn:dynamodb:{aws['Region']}:{aws['AccountId']}:table/{r}"
+        table = client.list_tags_of_resource(
+            ResourceArn=f"arn:aws:dynamodb:{aws['Region']}:{aws['AccountId']}:table/{r}"
         )
-        yield r
+        yield {
+            'CustomTableName': r,
+            'Tags': table['Tags']
+        }
 
 
 def paginate_health(client: object, paginator: object) -> any:
