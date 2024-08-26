@@ -293,7 +293,7 @@ def paginate_route_table(paginator: object) -> any:
         if propagative_vgw != 'NoValue':
             try:
                 propagative_vgw_id = propagative_vgw[0]['GatewayId']
-            except KeyError:
+            except IndexError:
                 propagative_vgw_id = ''
 
         # List subnet/gateway associated with the route table

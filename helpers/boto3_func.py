@@ -310,7 +310,7 @@ def get_routes(route_list: list) -> list:
 
         # Fix when the target if it is an EC2 instance (i.e. NAT Instance)
         if 'InstanceOwnerId' in x.keys():
-            gateway = f"{x['InstanceId']}-({x['InstanceOwnerId']})"
+            gateway = f"{x['NetworkInterfaceId']}-({x['InstanceId']})-({x['InstanceOwnerId']})"
 
         # If no target was found try Core Network ARN
         if not gateway:
