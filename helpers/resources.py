@@ -2,6 +2,7 @@
 """Set of functions to gather AWS resources."""
 
 from logging import getLogger
+from botocore.exceptions import ClientError
 from classes.python_sdk import Paginator, AwsPythonSdk
 from classes.python_arrays import GetItemFrom
 from helpers import config, SETUP
@@ -409,7 +410,7 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, paginator: o
                             GroupId=mapping['PrincipalId']
                         )
                         mapping['CustomPrincipalName'] = grp['DisplayName']
-                    except KeyError:
+                    except ClientError:
                         mapping['CustomPrincipalName'] = "Group not found"
                 else:
                     try:
@@ -419,7 +420,7 @@ def paginate_iam_sso_account_assignments(aws: dict, client: object, paginator: o
                         )
                         mapping['CustomPrincipalName'] = usr['UserName']
 
-                    except KeyError:
+                    except ClientError:
                         mapping['CustomPrincipalName'] = 'User not found'
 
                 yield mapping
