@@ -136,7 +136,7 @@ SETUP = {
     'ssm_inventory': {
         'Client': 'ssm',
         'Paginator': 'describe_instance_information',
-        'Headers':[
+        'Headers': [
             'InstanceId',
             'Name',
             'ComputerName',
@@ -148,7 +148,7 @@ SETUP = {
     'ssm_patching': {
         'Client': 'ssm',
         'Paginator': 'describe_instance_patch_states_for_patch_group',
-        'Headers':[
+        'Headers': [
             'InstanceId',
             'PatchGroup',
             'CustomName',
@@ -166,7 +166,7 @@ SETUP = {
         'Paginator': None,
         'Method': 'list_buckets',
         'ResponseItem': 'Buckets',
-        'Headers':[
+        'Headers': [
             'Name',
             'DaysSince:CreationDate',
             'CreationDate',
@@ -442,7 +442,7 @@ SETUP = {
     'cfn_stack': {
         'Client': 'cloudformation',
         'Paginator': 'list_stacks',
-        'Headers':[
+        'Headers': [
             'StackId',
             'StackName',
             'TemplateDescription',
@@ -455,7 +455,7 @@ SETUP = {
     'cfn_stack_set': {
         'Client': 'cloudformation',
         'Paginator': 'list_stack_sets',
-        'Headers':[
+        'Headers': [
             'StackSetId',
             'StackSetName',
             'Description',
@@ -478,7 +478,7 @@ SETUP = {
     'aws_config': {
         'Client': 'config',
         'Paginator': 'list_discovered_resources',
-        'Headers':[
+        'Headers': [
             'resourceType',
             'resourceId',
             'resourceName'
@@ -496,7 +496,7 @@ SETUP = {
     'storage_gw': {
         'Client': 'storagegateway',
         'Paginator': 'list_gateways',
-        'Headers':[
+        'Headers': [
             'GatewayId',
             'GatewayName',
             'GatewayType',
@@ -509,7 +509,7 @@ SETUP = {
         'Client': 'health',
         'Region': ['us-east-1'],
         'Paginator': 'describe_events',
-        'Headers':[
+        'Headers': [
             'arn',
             'service',
             'eventTypeCode',
@@ -528,7 +528,7 @@ SETUP = {
         'Paginator': None,
         'Method': 'list_resources',
         'ResponseItem': 'resources',
-        'Headers':[
+        'Headers': [
             'ArnService',
             'ArnType',
             'ArnId'
@@ -538,7 +538,7 @@ SETUP = {
         'Client': 'iam',
         'Region': [config.REGION],
         'Paginator': 'list_users',
-        'Headers':[
+        'Headers': [
             'UserName',
             'PasswordLastUsed',
             'DaysSince:PasswordLastUsed',
@@ -571,7 +571,7 @@ SETUP = {
         'Client': 'identitystore',
         'Region': [config.REGION],
         'Paginator': 'list_users',
-        'Headers':[
+        'Headers': [
             'UserName',
             'UserId',
             'CustomGroupIds',
@@ -584,7 +584,7 @@ SETUP = {
         'Client': 'identitystore',
         'Region': [config.REGION],
         'Paginator': 'list_groups',
-        'Headers':[
+        'Headers': [
             'GroupId',
             'DisplayName',
             'Description',
@@ -595,7 +595,7 @@ SETUP = {
         'Client': 'sso-admin',
         'Region': [config.REGION],
         'Paginator': 'list_permission_sets',
-        'Headers':[
+        'Headers': [
             'Name',
             'Description',
             'SessionDuration',
@@ -606,7 +606,7 @@ SETUP = {
         'Client': 'sso-admin',
         'Region': [config.REGION],
         'Paginator': 'list_account_assignments',
-        'Headers':[
+        'Headers': [
             'AccountId',
             'CustomAccountAlias',
             'PermissionSetArn',
