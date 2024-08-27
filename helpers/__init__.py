@@ -42,19 +42,6 @@ SETUP = {
             'IsSsmAgentEnabled'
         ]
     },
-    'fsx': {
-        'Client': 'fsx',
-        'Paginator': 'describe_file_systems',
-        'Headers': [
-            'FileSystemId',
-            'CreationTime',
-            'DaysSince:CreationTime',
-            'FileSystemType',
-            'StorageCapacity',
-            'StorageType',
-            'WindowsConfiguration:ActiveDirectoryId'
-        ]
-    },
     'ami': {
         'Client': 'ec2',
         'Paginator': 'describe_images',
@@ -89,6 +76,19 @@ SETUP = {
             'DaysSince:StartTime'
         ]
     },
+    'fsx': {
+        'Client': 'fsx',
+        'Paginator': 'describe_file_systems',
+        'Headers': [
+            'FileSystemId',
+            'CreationTime',
+            'DaysSince:CreationTime',
+            'FileSystemType',
+            'StorageCapacity',
+            'StorageType',
+            'WindowsConfiguration:ActiveDirectoryId'
+        ]
+    },
     'eni': {
         'Client': 'ec2',
         'Paginator': "describe_network_interfaces",
@@ -108,33 +108,6 @@ SETUP = {
             'Status',
             'SubnetId',
             'VpcId'
-        ]
-    },
-    'ssm_inventory': {
-        'Client': 'ssm',
-        'Paginator': 'describe_instance_information',
-        'Headers': [
-            'InstanceId',
-            'Name',
-            'ComputerName',
-            'PlatformName',
-            'PlatformVersion',
-            'AssociationStatus'
-        ]
-    },
-    'ssm_patching': {
-        'Client': 'ssm',
-        'Paginator': 'describe_instance_patch_states_for_patch_group',
-        'Headers': [
-            'InstanceId',
-            'PatchGroup',
-            'CustomName',
-            'CustomComputerName',
-            'CustomOperatingSystem',
-            'CustomPlatformVersion',
-            'OperationStartTime',
-            'OperationEndTime',
-            'DaysSince:OperationEndTime'
         ]
     },
     'elb': {
@@ -160,13 +133,40 @@ SETUP = {
             'CustomTargets'
         ]
     },
+    'ssm_inventory': {
+        'Client': 'ssm',
+        'Paginator': 'describe_instance_information',
+        'Headers':[
+            'InstanceId',
+            'Name',
+            'ComputerName',
+            'PlatformName',
+            'PlatformVersion',
+            'AssociationStatus'
+        ]
+    },
+    'ssm_patching': {
+        'Client': 'ssm',
+        'Paginator': 'describe_instance_patch_states_for_patch_group',
+        'Headers':[
+            'InstanceId',
+            'PatchGroup',
+            'CustomName',
+            'CustomComputerName',
+            'CustomOperatingSystem',
+            'CustomPlatformVersion',
+            'OperationStartTime',
+            'OperationEndTime',
+            'DaysSince:OperationEndTime'
+        ]
+    },
     's3_bucket': {
         'Client': 's3',
         'Region': [config.REGION],
         'Paginator': None,
         'Method': 'list_buckets',
         'ResponseItem': 'Buckets',
-        'Headers': [
+        'Headers':[
             'Name',
             'DaysSince:CreationDate',
             'CreationDate',
@@ -224,39 +224,6 @@ SETUP = {
             'LogDestination'
         ]
     },
-    'subnet': {
-        'Client': 'ec2',
-        'Paginator': 'describe_subnets',
-        'Headers': [
-            'SubnetId',
-            'VpcId',
-            'OwnerId',
-            'CidrBlock'
-        ]
-    },
-    'sec_group': {
-        'Client': 'ec2',
-        'Paginator': 'describe_security_groups',
-        'Headers': [
-            'GroupId',
-            'GroupName',
-            'IpPermissions',
-            'IpPermissionsEgress'
-        ]
-    },
-    'vpce': {
-        'Client': 'ec2',
-        'Paginator': 'describe_vpc_endpoints',
-        'Headers': [
-            'ServiceName',
-            'VpcEndpointId',
-            'VpcEndpointType',
-            'VpcId',
-            'State',
-            'PrivateDnsEnabled',
-            'OwnerId'
-        ]
-    },
     'vpc_peering': {
         'Client': 'ec2',
         'Paginator': 'describe_vpc_peering_connections',
@@ -284,6 +251,39 @@ SETUP = {
             'CustomNtpServers'
         ]
     },
+    'vpce': {
+        'Client': 'ec2',
+        'Paginator': 'describe_vpc_endpoints',
+        'Headers': [
+            'ServiceName',
+            'VpcEndpointId',
+            'VpcEndpointType',
+            'VpcId',
+            'State',
+            'PrivateDnsEnabled',
+            'OwnerId'
+        ]
+    },
+    'subnet': {
+        'Client': 'ec2',
+        'Paginator': 'describe_subnets',
+        'Headers': [
+            'SubnetId',
+            'VpcId',
+            'OwnerId',
+            'CidrBlock'
+        ]
+    },
+    'sec_group': {
+        'Client': 'ec2',
+        'Paginator': 'describe_security_groups',
+        'Headers': [
+            'GroupId',
+            'GroupName',
+            'IpPermissions',
+            'IpPermissionsEgress'
+        ]
+    },
     'tgw': {
         'Client': 'ec2',
         'Paginator': 'describe_transit_gateways',
@@ -294,21 +294,6 @@ SETUP = {
             'Options:AssociationDefaultRouteTableId',
             'Options:DnsSupport',
             'Options:VpnEcmpSupport'
-        ]
-    },
-    'tgw_attach': {
-        'Client': 'ec2',
-        'Paginator': 'describe_transit_gateway_attachments',
-        'Headers': [
-            'TransitGatewayAttachmentId',
-            'State',
-            'Association:State',
-            'TransitGatewayId',
-            'Association:TransitGatewayRouteTableId',
-            'ResourceOwnerId',
-            'ResourceType',
-            'ResourceId',
-            'CustomSubnets'
         ]
     },
     'igw': {
@@ -330,6 +315,21 @@ SETUP = {
             'State',
             'VpcId',
             'SubnetId'
+        ]
+    },
+    'tgw_attach': {
+        'Client': 'ec2',
+        'Paginator': 'describe_transit_gateway_attachments',
+        'Headers': [
+            'TransitGatewayAttachmentId',
+            'State',
+            'Association:State',
+            'TransitGatewayId',
+            'Association:TransitGatewayRouteTableId',
+            'ResourceOwnerId',
+            'ResourceType',
+            'ResourceId',
+            'CustomSubnets'
         ]
     },
     'route_table': {
@@ -442,7 +442,7 @@ SETUP = {
     'cfn_stack': {
         'Client': 'cloudformation',
         'Paginator': 'list_stacks',
-        'Headers': [
+        'Headers':[
             'StackId',
             'StackName',
             'TemplateDescription',
@@ -455,7 +455,7 @@ SETUP = {
     'cfn_stack_set': {
         'Client': 'cloudformation',
         'Paginator': 'list_stack_sets',
-        'Headers': [
+        'Headers':[
             'StackSetId',
             'StackSetName',
             'Description',
@@ -464,10 +464,21 @@ SETUP = {
             'PermissionModel'
         ]
     },
+    'aws_backup': {
+        'Client': 'backup',
+        'Paginator': 'list_protected_resources',
+        'Headers': [
+            'ResourceType',
+            'ArnId',
+            'ResourceName',
+            'LastBackupTime',
+            'DaysSince:LastBackupTime'
+        ]
+    },
     'aws_config': {
         'Client': 'config',
         'Paginator': 'list_discovered_resources',
-        'Headers': [
+        'Headers':[
             'resourceType',
             'resourceId',
             'resourceName'
@@ -482,21 +493,10 @@ SETUP = {
             'ArnId'
         ]
     },
-    'aws_backup': {
-        'Client': 'backup',
-        'Paginator': 'list_protected_resources',
-        'Headers': [
-            'ResourceType',
-            'ArnId',
-            'ResourceName',
-            'LastBackupTime',
-            'DaysSince:LastBackupTime'
-        ]
-    },
     'storage_gw': {
         'Client': 'storagegateway',
         'Paginator': 'list_gateways',
-        'Headers': [
+        'Headers':[
             'GatewayId',
             'GatewayName',
             'GatewayType',
@@ -509,7 +509,7 @@ SETUP = {
         'Client': 'health',
         'Region': ['us-east-1'],
         'Paginator': 'describe_events',
-        'Headers': [
+        'Headers':[
             'arn',
             'service',
             'eventTypeCode',
@@ -528,7 +528,7 @@ SETUP = {
         'Paginator': None,
         'Method': 'list_resources',
         'ResponseItem': 'resources',
-        'Headers': [
+        'Headers':[
             'ArnService',
             'ArnType',
             'ArnId'
@@ -538,7 +538,7 @@ SETUP = {
         'Client': 'iam',
         'Region': [config.REGION],
         'Paginator': 'list_users',
-        'Headers': [
+        'Headers':[
             'UserName',
             'PasswordLastUsed',
             'DaysSince:PasswordLastUsed',
@@ -571,7 +571,7 @@ SETUP = {
         'Client': 'identitystore',
         'Region': [config.REGION],
         'Paginator': 'list_users',
-        'Headers': [
+        'Headers':[
             'UserName',
             'UserId',
             'CustomGroupIds',
@@ -580,25 +580,11 @@ SETUP = {
             'CustomLocation'
         ]
     },
-    'iam_sso_account_assignments': {            # Only works in org root account
-        'Client': 'sso-admin',
-        'Region': [config.REGION],
-        'Paginator': 'list_account_assignments',
-        'Headers': [
-            'AccountId',
-            'CustomAccountAlias',
-            'PermissionSetArn',
-            'CustomPermissionSetName',
-            'PrincipalType',
-            'PrincipalId',
-            'CustomPrincipalName'
-        ]
-    },
     'iam_sso_group': {
         'Client': 'identitystore',
         'Region': [config.REGION],
         'Paginator': 'list_groups',
-        'Headers': [
+        'Headers':[
             'GroupId',
             'DisplayName',
             'Description',
@@ -609,11 +595,25 @@ SETUP = {
         'Client': 'sso-admin',
         'Region': [config.REGION],
         'Paginator': 'list_permission_sets',
-        'Headers': [
+        'Headers':[
             'Name',
             'Description',
             'SessionDuration',
             'PermissionSetArn'
+        ]
+    },
+    'iam_sso_account_assignments': {            # Only works in org root account
+        'Client': 'sso-admin',
+        'Region': [config.REGION],
+        'Paginator': 'list_account_assignments',
+        'Headers':[
+            'AccountId',
+            'CustomAccountAlias',
+            'PermissionSetArn',
+            'CustomPermissionSetName',
+            'PrincipalType',
+            'PrincipalId',
+            'CustomPrincipalName'
         ]
     }
 }
