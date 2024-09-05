@@ -14,16 +14,21 @@ from classes.tag import Tag
 LOGGER = getLogger(__name__)
 
 
-def accounts_to_query(account_id: str) -> list:
+def accounts_to_query(account_id: str, org_checks: bool) -> list:
     """Return a list with the AWS account/s where the query will run."""
-    # List of active AWS accounts in the Org
-    accounts = AwsPythonSdk(config.ROOT_ACCOUNT_ID, 'organizations').org_accounts()
-    if account_id != '111111111111':
-        # check if the selected account belongs to the Org
-        accounts = [GetItemFrom(accounts).by_key_pair('AccountId', account_id)]
-        if accounts == [None]:
-            LOGGER.error("Account ID %s does not exist in the Organization.", account_id)
-            sys.exit(-1)
+    if org_checks:
+        # List of active AWS accounts in the Org
+        accounts = AwsPythonSdk(config.ROOT_ACCOUNT_ID, 'organizations').org_accounts()
+        if account_id != '111111111111':
+            # check if the selected account belongs to the Org
+            accounts = [GetItemFrom(accounts).by_key_pair('AccountId', account_id)]
+            if accounts == [None]:
+                LOGGER.error("Account ID %s does not exist in the Organization.", account_id)
+                sys.exit(-1)
+    else:
+        # Skip Organization checks when you run the query at an Stand Alone AWS account
+        # or when you don't have IAM permissions at the Organization root account
+        accounts = [{'AccountAlias': 'STAND-ALONE-ACCOUNT', 'AccountId': account_id}]
 
     return accounts
 

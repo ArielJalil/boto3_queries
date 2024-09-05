@@ -1,6 +1,16 @@
 # Boto3 queries
 
-Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources within an AWS Organization.
+Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources.
+
+## Pre-requisites
+
+* Python 3.12 or greater
+* AWS CLI installed in your computer.
+* A valid AWS cli profile (either SSO or IAM user), this profile should allow you to authenticate
+with a Service Acccount that will need enough permissions to assume an IAM Service Role on each
+target account.
+* An IAM Service Role at each target account with permissions to run the queries, ideally only the
+permisssions required to query the services included in the script.
 
 ## Required Python modules
 
@@ -10,10 +20,6 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries to resources wit
 * python-dateutil
 
 **Note:** Check the `requirements.txt` file in case you have some package version issue.
-
-## Pre-requisite
-
-* A valid AWS cli profile (either SSO or IAM user)
 
 ## Consider to install pre-commit
 
@@ -30,18 +36,49 @@ This python script will run a query of the selected AWS resource across all enab
 Please update your specific AWS settings in the `helpers/config.py` file before run it:
 
 ```bash
-$ python3 boto3_query.py --help
+$ python boto3_query.py --help
 
 Usage: boto3_query.py [OPTIONS]
 
   Run an AWS resource query by service name.
 
 Options:
-  -n, --name [ec2|tag_editor|ami|vpc|vpc_flow_logs|subnet|sec_group|vpce|vpc_peering|vpc_dhcp|tgw|tgw_attach|igw|nat_gw|ebs_volume|ebs_volume_snap|route_table|aws_backup|r53_hosted_zones|ssm_inventory|ssm_patching|aws_config|iam_user|iam_sso_user|iam_sso_group|iam_sso_permission_sets|iam_sso_account_assignments|health|s3_bucket|ram|vpn|dx_vgw|dx_vif]
+  -n, --name [ec2|ami|ebs_volume|ebs_volume_snap|fsx|eni|elb|elb_v2|ssm_inventory|ssm_patching|s3_bucket|rds|dynamodb|vpc|vpc_flow_logs|vpc_peering|vpc_dhcp|vpce|subnet|sec_group|tgw|igw|nat_gw|tgw_attach|route_table|vpn|dx_connections|dx_gateway|dx_gateway_attach|dx_vgw|dx_vif|r53_hosted_zones|cfn_stack|cfn_stack_set|aws_backup|aws_config|tag_editor|storage_gw|health|ram|iam_user|iam_roles|iam_sso_user|iam_sso_group|iam_sso_permission_sets|iam_sso_account_assignments]
                                   Query name to run  [default: ec2]
-  -a, --account TEXT              AWS Account ID to run the query on.
-  -r, --region TEXT               AWS Region
+  -s, --session_type [sso|cli]    Select authentication type sso: Identity
+                                  Center or cli: Access Keys  [default: sso]
+  -a, --account TEXT              AWS Account ID in the Organization to run
+                                  the query.
+  --org_check / --no-org_check    Organization checks, Disable this flag only
+                                  when you run query on stand alone account.
+                                  [default: org_check]
+  -r, --region TEXT               AWS Region  [default: ap-southeast-2]
   --help                          Show this message and exit.
+```
+
+### Usage examples
+
+First step is to authenticate against your AWS Service account, in this example is a SSO login:
+
+```bash
+$ aws sso login --profile CLI_PROFILE_NAME
+```
+
+**Note:** This command will ask you to authenticate with your AWS account and save the generated temporary
+Access Keys in a cache folder, and this is the normal behaviour of the AWS CLI command. Then the script
+will use that cached keys until those expire and then you'll need to login again.
+
+Second step is to run a query for example in this case we will gather VPC details from all the accounts
+in the organization and all the enabled regions:
+
+```bash
+$ python boto3_query.py -n vpc
+```
+
+If you want to narrow down your query to an specific account and/or region you will add a couple of options
+
+```bash
+$ python boto3_query.py -n vpc -a 123456789012 -r us-east-1
 ```
 
 ## Author and Lincense

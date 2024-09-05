@@ -82,6 +82,15 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
     help='Query name to run'
 )
 @click.option(
+    '-s',
+    '--session_type',
+    default='sso',
+    show_default=True,
+    nargs=1,
+    type=click.Choice(['sso', 'cli'], case_sensitive=True),
+    help='Select authentication type sso: Identity Center or cli: Access Keys'
+)
+@click.option(
     '-a',
     '--account',
     default='111111111111',
@@ -89,7 +98,13 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
     nargs=1,
     type=str,
     callback=aws_account_id_callback,
-    help='AWS Account ID to run the query on.'
+    help='AWS Account ID in the Organization to run the query.'
+)
+@click.option(
+    '--org_check/--no-org_check',
+    default=True,
+    show_default=True,
+    help='Organization checks, Disable this flag only when you run query on stand alone account.'
 )
 @click.option(
     '-r',
@@ -99,13 +114,13 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
     nargs=1,
     help='AWS Region'
 )
-def run_query(name: str, account: str, region: str) -> None:
+def run_query(name: str, session_type: str, account: str, org_check: bool, region: str) -> None:
     """Run an AWS resource query by service name."""
 
     # Set query parameters to share the values across modules
     config.QUERY = name
     config.REGION = region
-    config.SESSION = AwsSession(config.CLI_PROFILE, region, authentication="sso").cli()
+    config.SESSION = AwsSession(config.CLI_PROFILE, region, authentication=session_type).cli()
 
     # Check if the user running the query is authenticated.
     caller = AwsPythonSdk(config.SERVICE_ACCOUNT_ID, 'sts').validate_sts_token()
@@ -113,8 +128,8 @@ def run_query(name: str, account: str, region: str) -> None:
 
     # Loop through all accounts/regions to run an AWS SDK query in parallel
     results = Looper(
-        accounts_to_query(account),  # List of AWS account/s to run a query
-        query_by_account,            # Function to run per account in parallel
+        accounts_to_query(account, org_check),  # List of AWS account/s to run a query
+        query_by_account,                       # Function to run per account in parallel
     ).parallel_return(summary=True)
 
     # Send the results to a csv file
