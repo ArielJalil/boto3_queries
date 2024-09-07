@@ -1,6 +1,6 @@
 # Boto3 queries
 
-Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources.
+Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources deployed at an AWS Organization.
 
 ## Pre-requisites
 
@@ -9,8 +9,10 @@ Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources.
 * A valid AWS cli profile (either SSO or IAM user), this profile should allow you to authenticate
 with a Service Acccount that will need enough permissions to assume an IAM Service Role on each
 target account.
-* An IAM Service Role at each target account with permissions to run the queries, ideally only the
-permisssions required to query the services included in the script.
+* An IAM Service Role at each target account in your organization with permissions to run the queries,
+ideally only the permisssions required to query the services included in the script.
+
+![Diagram](iam_permissions.drawio.png)
 
 ## Required Python modules
 
@@ -61,7 +63,7 @@ Options:
 First step is to authenticate against your AWS Service account, in this example is a SSO login:
 
 ```bash
-$ aws sso login --profile CLI_PROFILE_NAME
+> aws sso login --profile CLI_PROFILE_NAME
 ```
 
 **Note:** This command will ask you to authenticate with your AWS account and save the generated temporary
@@ -72,13 +74,13 @@ Second step is to run a query for example in this case we will gather VPC detail
 in the organization and all the enabled regions:
 
 ```bash
-$ python boto3_query.py -n vpc
+> python boto3_query.py -n vpc
 ```
 
 If you want to narrow down your query to an specific account and/or region you will add a couple of options
 
 ```bash
-$ python boto3_query.py -n vpc -a 123456789012 -r us-east-1
+> python boto3_query.py -n vpc -a 123456789012 -r us-east-1
 ```
 
 ## Author and Lincense
