@@ -11,14 +11,13 @@ from logging import getLogger
 from re import match
 import click
 
-from helpers import config
-from helpers import SETUP
+from helpers import config, SETUP
 from helpers.resources import get_resources
 from helpers.boto3_func import accounts_to_query, regions_to_query, add_region, \
                                try_get_value, get_resource_tags
 
 from classes.csv_file import CsvHandler
-from classes.python_sdk import AwsSession, AwsPythonSdk
+from classes.python_sdk import AwsSession
 from classes.looper import Looper
 
 LOGGER = getLogger(__name__)
@@ -63,7 +62,7 @@ def query_by_account(aws: dict) -> list:
     return Looper(aws_regions, resources_by_region).parallel_return()
 
 
-def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
+def aws_account_id_callback(ctx, param, value: str) -> str:  # pylint: disable=W0613
     """Validate AWS Account ID is valid."""
     if match(r'\d{12}', value) and len(value) == 12:
         return value
@@ -101,12 +100,6 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
     help='AWS Account ID in the Organization to run the query.'
 )
 @click.option(
-    '--org_check/--no-org_check',
-    default=True,
-    show_default=True,
-    help='Organization checks, Disable this flag only when you run query on stand alone account.'
-)
-@click.option(
     '-r',
     '--region',
     default=config.REGION,
@@ -114,22 +107,18 @@ def aws_account_id_callback(ctx, param, value):  # pylint: disable=W0613
     nargs=1,
     help='AWS Region'
 )
-def run_query(name: str, session_type: str, account: str, org_check: bool, region: str) -> None:
+def run_query(name: str, session_type: str, account: str, region: str) -> None:
     """Run an AWS resource query by service name."""
 
     # Set query parameters to share the values across modules
     config.QUERY = name
     config.REGION = region
-    config.SESSION = AwsSession(config.CLI_PROFILE, region, authentication=session_type).cli()
-
-    # Check if the user running the query is authenticated.
-    caller = AwsPythonSdk(config.SERVICE_ACCOUNT_ID, 'sts').validate_sts_token()
-    LOGGER.info("Query started by %s", caller['Arn'])
+    config.SESSION = AwsSession(config.CLI_PROFILE, region, authentication=session_type).sts()
 
     # Loop through all accounts/regions to run an AWS SDK query in parallel
     results = Looper(
-        accounts_to_query(account, org_check),  # List of AWS account/s to run a query
-        query_by_account,                       # Function to run per account in parallel
+        accounts_to_query(account),     # List of AWS account/s to run a query
+        query_by_account,               # Function to run per account in parallel
     ).parallel_return(summary=True)
 
     # Send the results to a csv file

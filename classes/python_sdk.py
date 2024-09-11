@@ -31,13 +31,10 @@ class AwsSession:
             sys.exit(-1)
 
     def cli(self):
-        """Start a session to be used from CLI."""
-        cache = f".aws/{self.authentication}/cache"
-
-        cli_cache = os.path.join(os.path.expanduser('~'), cache)
-        cli_session = None
+        """Create a boto3 session with AWS CLI profile."""
+        session = None
         try:
-            cli_session = Session(
+            session = Session(
                 profile_name=self.profile,
                 region_name=self.region
             )
@@ -46,7 +43,15 @@ class AwsSession:
             self._instance_logger(e)
             sys.exit(-1)
 
-        cli_session._session.get_component(  # pylint: disable=W0212
+        # AWS CLI cache path for Linux or Windows platforms
+        if os.name != 'nt':
+            cache = f".aws/{self.authentication}/cache"
+            cli_cache = os.path.join(os.path.expanduser('~'), cache)
+        else:
+            cache = R".aws\{self.authentication}\cache"
+            cli_cache = os.path.join(os.path.expanduser(os.environ['USERPROFILE']), cache)
+
+        session._session.get_component(  # pylint: disable=W0212
             'credential_provider'
         ).get_provider(
             'assume-role'
@@ -54,17 +59,36 @@ class AwsSession:
             cli_cache
         )
 
+        return session
+
+    def sts(self) -> object:
+        """Create a boto3 session using AWS STS credentials from Service
+        Account."""
+        cli_session = self.cli()
+        if config.SERVICE_ACCOUNT_ROLE:
+            sts = Sts(cli_session, config.SERVICE_ACCOUNT_ID, config.SERVICE_ACCOUNT_ROLE)
+            MODULE_LOGGER.info("CLI User assumed role %s", sts.caller_arn())
+
+            role = sts.assume_role()
+            return Session(
+                aws_access_key_id=role['Credentials']['AccessKeyId'],
+                aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+                aws_session_token=role['Credentials']['SessionToken']
+            )
+
+        MODULE_LOGGER.info(
+            "CLI User will assumed IAM role %s in target accounts.", config.TARGET_ACCOUNT_ROLE
+        )
+
         return cli_session
 
     def lambdas(self) -> object:
         """Start a session to be used in a Lambda funcion."""
         try:
-            session = Session(region_name=self.region)
+            return Session(region_name=self.region)
         except Exception as e:  # pylint: disable=W0718
             self._instance_logger.error(e)
             sys.exit(-1)
-
-        return session
 
 
 class Paginator:  # pylint: disable=R0903
@@ -92,15 +116,14 @@ class Paginator:  # pylint: disable=R0903
 
         try:
             for page in paginator.paginate(**kwargs).result_key_iters():
-                for result in page:
-                    yield result
+                yield from page
 
         except UnboundLocalError as e:
             self._instance_logger.error(f"Paginator failure: {e}")
             sys.exit(-1)
 
         except ClientError as e:
-            self._instance_logger.error(f"Paginator failure: {e}")
+            self._instance_logger.error(f"Paginator client failure: {e}")
             sys.exit(-1)
 
 
@@ -158,8 +181,9 @@ class Sts:
 
         return sts
 
-    def get_client(self, aws_service: str, aws_region='ap-southeast-2') -> object:
+    def client(self, aws_service: str, aws_region='ap-southeast-2') -> object:
         """Set boto3 client using STS token."""
+        client = None
         sts = self.assume_role()
         if sts:
             try:
@@ -172,11 +196,10 @@ class Sts:
                 )
             except ClientError as erro:
                 self._instance_logger.error(f"Boto3 client {aws_service} service failed:\n{erro}")
-                client = None
 
         return client
 
-    def get_resource(self, aws_service: str, region='ap-southeast-2') -> object:
+    def resource(self, aws_service: str, region='ap-southeast-2') -> object:
         """Set boto3 resource using STS token."""
         sts = self.assume_role()
         try:
@@ -193,52 +216,9 @@ class Sts:
 
         return resource
 
-
-class AwsPythonSdk:
-    """Assume role and set Boto3 object."""
-    _class_logger = MODULE_LOGGER.getChild(__qualname__)
-
-    def __init__(self, account_id: str, service: str, region=config.REGION) -> None:
-        """Class constructor."""
-        self._instance_logger = self._class_logger.getChild(str(id(self)))
-        self.account_id = account_id
-        self.service = service
-        self.region = region
-        self.session = config.SESSION
-        self.role = config.SERVICE_ROLE_NAME
-        self.service_account = config.SERVICE_ACCOUNT_ID
-
-    def client(self):
-        """Get boto3 client in target AWS Account."""
-        # Service IAM Role might not be deployed at the service account
-        if self.account_id != self.service_account:
-            # Set boto3 client using STS credentials
-            client = Sts(
-                self.session, self.account_id, self.role
-            ).get_client(self.service, self.region)
-        else:
-            # The service account is already authenticated and it will use current user's IAM role
-            client = self.session.client(self.service, self.region)
-
-        return client
-
-    def resource(self):
-        """Get boto3 resource in target AWS Account."""
-        # Service IAM Role might not be deployed at the service account
-        if self.account_id != self.service_account:
-            # Set boto3 resource using STS credentials
-            client = Sts(
-                self.session, self.account_id, self.role
-            ).get_resource(self.service, self.region)
-        else:
-            # The service account is already authenticated and it will use current user's IAM role
-            client = self.session.resource(self.service, self.region)
-
-        return client
-
-    def validate_sts_token(self) -> str:
+    def caller_arn(self) -> str:
         """Check if current user is already authenticated."""
-        sts = self.client()
+        sts = self.client('sts')
 
         try:
             caller = sts.get_caller_identity()
@@ -252,7 +232,57 @@ class AwsPythonSdk:
             self._instance_logger.error("Current user validation failed: %s", e)
             sys.exit(-1)
 
-        return caller
+        return caller['Arn']
+
+
+class AwsPythonSdk:  # pylint: disable=R0902
+    """Assume role and set Boto3 object."""
+    _class_logger = MODULE_LOGGER.getChild(__qualname__)
+
+    def __init__(self, account_id: str, service: str, region=config.REGION) -> None:
+        """Class constructor."""
+        self._instance_logger = self._class_logger.getChild(str(id(self)))
+        self.account_id = account_id
+        self.service = service
+        self.region = region
+        self.session = config.SESSION
+        self.target_role = config.TARGET_ACCOUNT_ROLE
+        self.service_account_id = config.SERVICE_ACCOUNT_ID
+        self.service_account_role = config.SERVICE_ACCOUNT_ROLE
+
+    def client(self):
+        """Get boto3 client in target AWS Account."""
+        if self.account_id != self.service_account_id:
+            client = Sts(
+                self.session, self.account_id, self.target_role
+            ).client(self.service, self.region)
+        else:
+            if self.service_account_role:
+                client = Sts(
+                    self.session, self.account_id, self.target_role
+                ).client(self.service, self.region)
+            else:
+                # Not using an intermediary IAM role to reach target accounts
+                client = self.session.client(self.service, self.region)
+
+        return client
+
+    def resource(self):
+        """Get boto3 resource in target AWS Account."""
+        if self.account_id != self.service_account_id:
+            resource = Sts(
+                self.session, self.account_id, self.target_role
+            ).resource(self.service, self.region)
+        else:
+            if self.service_account_role:
+                resource = Sts(
+                    self.session, self.account_id, self.target_role
+                ).resource(self.service, self.region)
+            else:
+                # Not using an intermediary IAM role to reach target accounts
+                resource = self.session.resource(self.service, self.region)
+
+        return resource
 
     def get_regions(self) -> any:
         """Gets Regions Enabled for the AWS Account."""
@@ -276,4 +306,6 @@ class AwsPythonSdk:
                     'AccountAlias': account['Name']
                 }
             else:
-                self._instance_logger.info(f"AWS Account {account['Name']} in status {account['Status']} was excluded.")  # pylint: disable=C0301
+                self._instance_logger.info(
+                    f"AWS Account {account['Name']} in status {account['Status']} was excluded."
+                )

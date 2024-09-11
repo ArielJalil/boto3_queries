@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """General useful functions to support boto3 api calls."""
-
+# from pprint import pprint
 import sys
 from logging import getLogger
 from helpers import SETUP, config
@@ -14,21 +14,21 @@ from classes.tag import Tag
 LOGGER = getLogger(__name__)
 
 
-def accounts_to_query(account_id: str, org_checks: bool) -> list:
+def accounts_to_query(account_id: str) -> list:
     """Return a list with the AWS account/s where the query will run."""
-    if org_checks:
+    if config.ROOT_ACCOUNT_ID:
         # List of active AWS accounts in the Org
         accounts = AwsPythonSdk(config.ROOT_ACCOUNT_ID, 'organizations').org_accounts()
-        if account_id != '111111111111':
-            # check if the selected account belongs to the Org
-            accounts = [GetItemFrom(accounts).by_key_pair('AccountId', account_id)]
-            if accounts == [None]:
-                LOGGER.error("Account ID %s does not exist in the Organization.", account_id)
-                sys.exit(-1)
     else:
-        # Skip Organization checks when you run the query at an Stand Alone AWS account
-        # or when you don't have IAM permissions at the Organization root account
-        accounts = [{'AccountAlias': 'STAND-ALONE-ACCOUNT', 'AccountId': account_id}]
+        # List of accounts added manualy to the config settings
+        accounts = config.INCLUSION_LIST
+
+    if account_id != '111111111111':
+        # check if the selected account belongs to the Org or Inclusion list
+        accounts = [GetItemFrom(accounts).by_key_pair('AccountId', account_id)]
+        if accounts == [None]:
+            LOGGER.error("Account ID %s has not been found.", account_id)
+            sys.exit(-1)
 
     return accounts
 
@@ -144,8 +144,7 @@ def get_dx_gw_attach(query: str, client: object, boto3_method: object) -> any:
 
     for dx_gw_id in dx_gw_ids:
         response = boto3_method(directConnectGatewayId=dx_gw_id)
-        for attach in response[SETUP[query]['ResponseItem']]:
-            yield attach
+        yield from response[SETUP[query]['ResponseItem']]
 
 
 def s3_bucket_query(aws: dict, query: str, boto3_method: object) -> any:
@@ -305,6 +304,7 @@ def get_routes(route_list: list) -> list:
     """List routes as a string."""
     routes = ''
     for x in route_list:
+        destination = ''
         gateway = ''
         for key in x.keys():
             if 'Destination' in key:
