@@ -51,9 +51,6 @@ Options:
                                   Center or cli: Access Keys  [default: sso]
   -a, --account TEXT              AWS Account ID in the Organization to run
                                   the query.
-  --org_check / --no-org_check    Organization checks, Disable this flag only
-                                  when you run query on stand alone account.
-                                  [default: org_check]
   -r, --region TEXT               AWS Region  [default: ap-southeast-2]
   --help                          Show this message and exit.
 ```
