@@ -1,6 +1,7 @@
 # Boto3 queries
 
-Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources deployed at an AWS Organization.
+Use Python boto3 module, AWS SDK for Python, to run CLI queries of resources deployed at an AWS Organization
+or a simple list of standalone accounts.
 
 ## Pre-requisites
 
