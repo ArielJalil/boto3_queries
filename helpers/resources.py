@@ -210,6 +210,7 @@ def paginate_ssm_patching(client: object, paginator: object) -> any:
             i['CustomName'] = try_get_value(vm_from_inventory, 'Name')
             i['CustomComputerName'] = try_get_value(vm_from_inventory, 'ComputerName')
             i['CustomPlatformVersion'] = try_get_value(vm_from_inventory, 'PlatformVersion')
+            platform = None
             if vm_from_inventory:
                 platform = get_operating_system(vm_from_inventory['PlatformName'])
                 i['CustomIsInSsmInventory'] = True
@@ -292,6 +293,7 @@ def paginate_vpc_dhcp(paginator: object) -> any:
 def paginate_route_table(paginator: object) -> any:
     """Paginate VPC Route Tables options and add extra values."""
     for i in paginator:
+        propagative_vgw_id = ''
         propagative_vgw = try_get_value(i, 'PropagatingVgws')
         if propagative_vgw != 'NoValue':
             try:

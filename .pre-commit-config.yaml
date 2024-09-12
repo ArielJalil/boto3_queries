@@ -1,13 +1,13 @@
 repos:
 # MarkDown
 - repo: https://github.com/igorshubovych/markdownlint-cli
-  rev: v0.38.0
+  rev: v0.41.0
   hooks:
   - id: markdownlint
     name: Run markdownlint on your Markdown files
 # CommonTextIssues
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
     - id: trailing-whitespace
       name: Trims trailing whitespace
@@ -32,12 +32,12 @@ repos:
     - id: docformatter
       name: DocFormatter - Format Python docstrings
 - repo: https://github.com/PyCQA/bandit
-  rev: 1.7.6
+  rev: 1.7.9
   hooks:
     - id: bandit
       name: Bandit - Python common security issues
 - repo: https://github.com/PyCQA/flake8
-  rev: 6.1.0
+  rev: 7.1.1
   hooks:
     - id: flake8
       name: Flake8 - Style Guide
@@ -46,7 +46,7 @@ repos:
         - --max-line-length=100        # Matching with PyLint default line length
         - --ignore=E126, E501, E722, E122    # line-over-indented, line-too-long, bare-except, continuation line missing indentation or outdented
 - repo: https://github.com/PyCQA/pylint
-  rev: v3.0.3
+  rev: v3.2.7
   hooks:
     - id: pylint
       name: Pylint - Static code analyzer
